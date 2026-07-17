@@ -1,5 +1,7 @@
 # v2rayNG Modified
 
+اولین ویرایش v2ray که تا الان نوار مصرف ترافیک داره
+
 نسخه شخصی‌سازی شده v2rayNG با قابلیت‌های اضافه
 
 Personalized v2rayNG with additional features
@@ -33,6 +35,16 @@ Personalized v2rayNG with additional features
 به بخش [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) مراجعه کنید.
 
 See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for downloads.
+
+---
+
+## حمایت / Donate
+
+**USDT (BEP20):** `0xAab8aE16283C399e188328b9b06cECCAd47FABDe`
+
+**TRX:** `0xAab8aE16283C399e188328b9b06cECCAd47FABDe`
+
+---
 
 ## Source
 
