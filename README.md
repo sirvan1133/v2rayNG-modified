@@ -1,6 +1,21 @@
-v2rayNG Modified
+# v2rayNG Modified
+
+نسخه شخصی‌سازی شده v2rayNG با قابلیت‌های اضافه
 
 Personalized v2rayNG with additional features
+
+---
+
+## تغییرات
+
+- حذف عنوان "Config" از نوار بالا
+- سه دکمه در نوار بالا: بروزرسانی (Update Subscription)، پینگ (Ping All)، افزودن از کلیپ‌بورد (Add from Clipboard)
+- حذف اشتراک پیش‌فرض هنگام نصب اولیه
+- دکمه گزارش باگ (Bug Report) در منوی کشویی
+- آپدیت خودکار اشتراک‌ها هنگام باز شدن برنامه
+- نمایش نوار مصرف ترافیک در بالای صفحه (مخصوص هر گروه/ساب)
+- نمایش درصد مصرف، حجم مصرف شده، حجم باقی مانده، کل ترافیک و روزهای باقی مانده
+- بررسی خودکار آپدیت روزانه از گیت‌هاب
 
 ## Changes
 
@@ -15,7 +30,7 @@ Personalized v2rayNG with additional features
 
 ## Build
 
-APK is at: app/build/outputs/apk/playstore/debug/
+APK: `app/build/outputs/apk/playstore/debug/`
 
 ## Source
 
