@@ -52,4 +52,8 @@ https://github.com/sirvan1133/v2rayNG-modified
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg)
+<a href="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg">
+  <img src="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg"
+       alt="Screenshot"
+       style="width:300px; height:200px; object-fit:cover; object-position:0 0; border:1px solid #ddd; border-radius:4px;">
+</a>
