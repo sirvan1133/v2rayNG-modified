@@ -52,8 +52,9 @@ https://github.com/sirvan1133/v2rayNG-modified
 
 ## Screenshot
 
-<a href="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg">
-  <img src="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg"
-       alt="Screenshot"
-       style="width:300px; height:400px; object-fit:none; object-position:0px 0px; border:1px solid #ddd; border-radius:4px;">
-</a>
+<div style="width:300px; height:200px; overflow:hidden; border:1px solid #ddd; border-radius:4px;">
+  <a href="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg">
+    <img src="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg"
+         alt="Screenshot" style="width:300px;">
+  </a>
+</div>
