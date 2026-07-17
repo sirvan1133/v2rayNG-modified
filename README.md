@@ -19,7 +19,7 @@ Personalized v2rayNG with additional features
 - نمایش درصد مصرف، حجم مصرف شده، حجم باقی مانده، کل ترافیک و روزهای باقی مانده
 - بررسی خودکار آپدیت روزانه از گیت‌هاب
 
-- Removed "Config" title from toolbar
+
 - Three buttons in toolbar: Update Subscription, Ping All, Add from Clipboard
 - Removed default subscription on fresh install
 - Bug Report button in drawer menu
