@@ -49,3 +49,7 @@ See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for down
 ## Source
 
 https://github.com/sirvan1133/v2rayNG-modified
+
+## Screenshot
+
+![Screenshot](https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg)
