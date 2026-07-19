@@ -6,6 +6,12 @@
 
 Personalized v2rayNG with additional features
 
+## Screenshots
+
+| Light theme | Dark theme |
+| --- | --- |
+| <img src="screenshot-light.png" alt="Cinematic VPN world map — light theme" width="280"> | <img src="screenshot-dark.png" alt="Cinematic VPN world map — dark theme" width="280"> |
+
 ---
 
 ## تغییرات / Changes
@@ -68,8 +74,3 @@ See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for down
 
 https://github.com/sirvan1133/v2rayNG-modified
 
-## Screenshots
-
-| Light theme | Dark theme |
-| --- | --- |
-| <img src="screenshot-light.png" alt="Cinematic VPN world map — light theme" width="280"> | <img src="screenshot-dark.png" alt="Cinematic VPN world map — dark theme" width="280"> |
