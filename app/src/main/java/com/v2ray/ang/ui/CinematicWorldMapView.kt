@@ -41,15 +41,18 @@ class CinematicWorldMapView @JvmOverloads constructor(
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
     private val mapPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     private val activationPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val edgeFadePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val trailPath = Path()
+    private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (isLightTheme) Color.rgb(63, 53, 86) else Color.WHITE
+        textSize = 11f * resources.displayMetrics.scaledDensity
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
     private data class MapCache(val bitmap: Bitmap, val scale: Float)
-    // Two offline vector raster caches: a small overview for the disconnected
-    // globe and a 1:1-detail cache for the 5x endpoint camera.  Both are made
-    // before the first frame, so changing LOD never exposes empty map edges.
-    private var overviewCache: MapCache? = null
-    private var detailCache: MapCache? = null
-    private var lastCacheX = Float.NaN
-    private var lastCacheY = Float.NaN
-    private var lastCacheZoom = Float.NaN
+    // A single high-detail vector raster cache remains GPU-resident for the
+    // whole session. Avoiding an LOD blend removes the frame hitch that occurred
+    // while two large world textures were composited during marker movement.
+    private var mapCache: MapCache? = null
     private var camera = GeoPoint(35.69, 51.39) // a neutral default near the user's region
     private var source = camera
     private var destination = camera
@@ -78,10 +81,9 @@ class CinematicWorldMapView @JvmOverloads constructor(
     // therefore use a stable world-space scale rather than width/height (which are 0
     // at that time).  A 4096px Mercator world also keeps the camera genuinely zoomed.
     private val worldScale = 4096f
-    private val overviewTextureScale = .5f
-    // 6144px detail texture: at 3x focus it stays comfortably above the
-    // device pixel density instead of being visibly enlarged.
-    private val detailTextureScale = 1.5f
+    // 4096px is the largest broadly safe GPU texture on Android.  Keeping one
+    // cache at this size avoids both texture swaps and oversized-GPU stalls.
+    private val mapTextureScale = 1f
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -169,7 +171,11 @@ class CinematicWorldMapView @JvmOverloads constructor(
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        // The full world texture is independent of view size and is intentionally retained.
+        edgeFadePaint.shader = LinearGradient(
+            0f, 0f, 0f, h.toFloat(),
+            intArrayOf(surfaceColor, Color.TRANSPARENT, surfaceColor),
+            floatArrayOf(0f, .18f, 1f), Shader.TileMode.CLAMP
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -185,27 +191,22 @@ class CinematicWorldMapView @JvmOverloads constructor(
     }
 
     private fun buildMapTexture() {
-        overviewCache?.bitmap?.recycle()
-        detailCache?.bitmap?.recycle()
-        fun rasterize(scale: Float): MapCache {
-            val bitmap = Bitmap.createBitmap((worldScale * scale).toInt(), (worldScale * scale).toInt(), Bitmap.Config.RGB_565)
-            val c = Canvas(bitmap)
-            c.drawColor(oceanColor)
-            c.save()
-            c.scale(scale, scale)
-            for (country in countries) { c.drawPath(country.path, coastPaint); c.drawPath(country.path, borderPaint) }
-            c.restore()
-            return MapCache(bitmap, scale)
-        }
-        overviewCache = rasterize(overviewTextureScale)
-        detailCache = rasterize(detailTextureScale)
+        mapCache?.bitmap?.recycle()
+        val bitmap = Bitmap.createBitmap((worldScale * mapTextureScale).toInt(), (worldScale * mapTextureScale).toInt(), Bitmap.Config.RGB_565)
+        val c = Canvas(bitmap)
+        c.drawColor(oceanColor)
+        c.save()
+        c.scale(mapTextureScale, mapTextureScale)
+        for (country in countries) { c.drawPath(country.path, coastPaint); c.drawPath(country.path, borderPaint) }
+        c.restore()
+        mapCache = MapCache(bitmap, mapTextureScale)
     }
 
     /** A cheap, hardware-accelerated camera-motion blur: two translucent cached frames. */
     private fun drawMapWithMotionBlur(canvas: Canvas) {
+        val cache = mapCache ?: return
         val current = project(camera)
-        fun drawCached(cache: MapCache, alpha: Int, blurX: Float = 0f, blurY: Float = 0f) {
-            if (alpha <= 0) return
+        fun drawCached(alpha: Int, blurX: Float = 0f, blurY: Float = 0f) {
             mapPaint.alpha = alpha
             canvas.save()
             canvas.translate(width / 2f + blurX, height / 2f + blurY)
@@ -214,13 +215,6 @@ class CinematicWorldMapView @JvmOverloads constructor(
             canvas.drawBitmap(cache.bitmap, 0f, 0f, mapPaint)
             canvas.restore()
         }
-        // Cross-fade between levels rather than switching a bitmap at one frame.
-        // The detailed cache takes over before the close 5x view is visible.
-        val detailWeight = ((cameraZoom - 1.25f) / .75f).coerceIn(0f, 1f)
-        val layers = listOf(
-            overviewCache to ((1f - detailWeight) * 255).toInt(),
-            detailCache to (detailWeight * 255).toInt()
-        )
         if (isAnimating) {
             val from = project(source)
             val to = project(destination)
@@ -230,12 +224,11 @@ class CinematicWorldMapView @JvmOverloads constructor(
             val strength = (7f * cameraZoom).coerceAtMost(15f)
             val x = dx / length * strength
             val y = dy / length * strength
-            layers.forEach { (cache, alpha) -> cache?.let {
-                drawCached(it, (alpha * .13f).toInt(), -x, -y)
-                drawCached(it, (alpha * .23f).toInt(), -x * .45f, -y * .45f)
-            } }
+            // One subtle trailing sample is enough for motion blur.  Rendering a
+            // second full-size sample was the main source of dropped frames.
+            drawCached(44, -x, -y)
         }
-        layers.forEach { (cache, alpha) -> cache?.let { drawCached(it, alpha) } }
+        drawCached(255)
     }
 
     private fun drawPacket(canvas: Canvas, raw: Float) {
@@ -244,20 +237,27 @@ class CinematicWorldMapView @JvmOverloads constructor(
         // dot appear below the destination during a country change.
         val packetT = raw
         val p = screenPoint(markerPosition)
-        val tailSteps = 22
-        for (i in tailSteps downTo 1) {
+        val tailSteps = 12
+        trailPath.reset()
+        var tailX = p.x
+        var tailY = p.y
+        for (i in tailSteps downTo 0) {
             val t = (packetT - i / tailSteps.toFloat() * .28f).coerceAtLeast(0f)
             val a = screenPoint(interpolate(markerStart, destination, cinematicEase(t)))
-            val alpha = ((1f - i / tailSteps.toFloat()) * 190).toInt()
-            linePaint.shader = LinearGradient(a.x, a.y, p.x, p.y, Color.TRANSPARENT, ColorUtils.setAlphaComponent(endpointColor(), alpha), Shader.TileMode.CLAMP)
-            linePaint.strokeWidth = 2f + (tailSteps - i) * .16f
-            canvas.drawLine(a.x, a.y, p.x, p.y, linePaint)
+            if (i == tailSteps) { trailPath.moveTo(a.x, a.y); tailX = a.x; tailY = a.y } else trailPath.lineTo(a.x, a.y)
         }
+        linePaint.shader = LinearGradient(tailX, tailY, p.x, p.y, Color.TRANSPARENT, ColorUtils.setAlphaComponent(endpointColor(), 205), Shader.TileMode.CLAMP)
+        linePaint.strokeWidth = 3.2f
+        canvas.drawPath(trailPath, linePaint)
         linePaint.shader = null
-        glowPaint.shader = RadialGradient(p.x, p.y, 30f, intArrayOf(ColorUtils.setAlphaComponent(endpointColor(), 185), Color.TRANSPARENT), null, Shader.TileMode.CLAMP)
-        canvas.drawCircle(p.x, p.y, 30f, glowPaint)
-        glowPaint.shader = null; glowPaint.color = Color.WHITE
-        canvas.drawCircle(p.x, p.y, 4.2f, glowPaint)
+        // A few inexpensive particles give the trail texture without allocating
+        // a gradient for every segment.
+        glowPaint.color = ColorUtils.setAlphaComponent(endpointColor(), 120)
+        for (i in 3..9 step 3) {
+            val t = (packetT - i / tailSteps.toFloat() * .28f).coerceAtLeast(0f)
+            val particle = screenPoint(interpolate(markerStart, destination, cinematicEase(t)))
+            canvas.drawCircle(particle.x, particle.y, 1.6f, glowPaint)
+        }
     }
 
     private fun drawEndpoint(canvas: Canvas, point: GeoPoint, arriving: Boolean) {
@@ -282,23 +282,18 @@ class CinematicWorldMapView @JvmOverloads constructor(
 
     /** Country label is anchored to the live node itself, always on its right. */
     private fun drawCountryLabel(canvas: Canvas, p: PointF, color: Int) {
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = if (isLightTheme) Color.rgb(63, 53, 86) else Color.WHITE
-            textSize = 11f * resources.displayMetrics.scaledDensity
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
         val paddingX = 10f * resources.displayMetrics.density
         val paddingY = 6f * resources.displayMetrics.density
         val label = "${endpoint.flag}  ${endpoint.country}"
-        val w = textPaint.measureText(label) + paddingX * 2
-        val h = textPaint.fontMetrics.run { bottom - top } + paddingY * 2
+        val w = labelTextPaint.measureText(label) + paddingX * 2
+        val h = labelTextPaint.fontMetrics.run { bottom - top } + paddingY * 2
         val left = (p.x + 22f).coerceAtMost(width - w - 8f)
         val top = (p.y - h / 2f).coerceIn(8f, height - h - 8f)
         glowPaint.color = if (isLightTheme) Color.argb(232, 255, 255, 255) else Color.argb(232, 17, 37, 55)
         canvas.drawRoundRect(left, top, left + w, top + h, 8f, 8f, glowPaint)
         linePaint.color = ColorUtils.setAlphaComponent(color, 105); linePaint.strokeWidth = 1f
         canvas.drawRoundRect(left, top, left + w, top + h, 8f, 8f, linePaint)
-        canvas.drawText(label, left + paddingX, top + paddingY - textPaint.fontMetrics.top, textPaint)
+        canvas.drawText(label, left + paddingX, top + paddingY - labelTextPaint.fontMetrics.top, labelTextPaint)
     }
 
     private fun endpointColor() = ColorUtils.blendARGB(accentColor, activeColor, connectionBlend)
@@ -344,10 +339,7 @@ class CinematicWorldMapView @JvmOverloads constructor(
     } */
 
     private fun drawEdgeFade(canvas: Canvas) {
-        val fade = Paint().apply {
-            shader = LinearGradient(0f, 0f, 0f, height.toFloat(), intArrayOf(surfaceColor, Color.TRANSPARENT, surfaceColor), floatArrayOf(0f, .18f, 1f), Shader.TileMode.CLAMP)
-        }
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fade)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), edgeFadePaint)
     }
 
     private fun loadCountries() {

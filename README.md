@@ -16,6 +16,16 @@ Personalized v2rayNG with additional features
 
 ## تغییرات / Changes
 
+### v2.5.7 — Smooth map rendering
+
+- حذف رندر هم‌زمان چند کش بزرگ نقشه در زمان حرکت
+- بهینه‌سازی دنبالهٔ Marker و کاهش ایجاد Shader در هر فریم برای حرکت روان‌تر
+
+### v2.5.7 — Smooth map rendering
+
+- Removed multi-texture map compositing while moving
+- Optimized the marker trail to reduce per-frame shader creation and improve smoothness
+
 ### v2.5.6 — Cinematic VPN World Map
 
 - نقشهٔ زندهٔ جهان بر پایهٔ داده‌های واقعی کشورها، نه تصویر پس‌زمینهٔ ثابت
