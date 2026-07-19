@@ -10,6 +10,26 @@ Personalized v2rayNG with additional features
 
 ## تغییرات / Changes
 
+### v2.5.6 — Cinematic VPN World Map
+
+- نقشهٔ زندهٔ جهان بر پایهٔ داده‌های واقعی کشورها، نه تصویر پس‌زمینهٔ ثابت
+- تشخیص کشور IP عمومی در حالت قطع اتصال و نمایش کشور سرور در حالت اتصال
+- نشانگر زنده با پرچم و نام کشور، پالس، حلقه‌های نورانی و دنبالهٔ داده
+- حرکت نرم دوربین: ابتدا نقشه به مقصد می‌رود و سپس نشانگر اتصال حرکت می‌کند
+- زوم تطبیقی 3× با کش چندسطحی برای حفظ کیفیت نقشه و جلوگیری از پرش یا بارگذاری دوباره
+- تغییر امن بین سرورها بدون تکرار Marker، Teleport شدن یا Crash
+- بهینه‌سازی رندر: لایهٔ ثابت نقشه کش می‌شود و فقط لایه‌های انیمیشنی در هر فریم به‌روزرسانی می‌شوند
+
+### v2.5.6 — Cinematic VPN World Map
+
+- Live world map based on real country geometry, not a static background image
+- Public-IP country while disconnected; selected server country while connected
+- Live endpoint with country flag/name, pulse, radar rings, glow, and a data trail
+- Cinematic motion: the camera travels first, then the connection node follows
+- Adaptive 3× zoom with multi-level map caching for crisp detail without reload flashes
+- Safe server-to-server transitions with no duplicate marker, teleport, or map crash
+- Cached static map layer; only animated effects redraw per frame for smoother performance
+
 
 - سه دکمه در نوار بالا: بروزرسانی، پینگ، افزودن از کلیپ‌بورد
 - حذف اشتراک پیش‌فرض هنگام نصب اولیه

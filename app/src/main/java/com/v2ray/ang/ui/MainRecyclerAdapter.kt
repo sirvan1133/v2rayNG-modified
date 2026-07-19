@@ -3,6 +3,7 @@ package com.v2ray.ang.ui
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -62,6 +63,12 @@ class MainRecyclerAdapter(
             holder.itemMainBinding.tvStatistics.text = getAddress(profile)
             holder.itemMainBinding.tvType.text = getProtocolDescription(profile)
 
+            val isSelected = guid == MmkvManager.getSelectServer()
+            holder.itemMainBinding.tvCountry.apply {
+                // The endpoint label belongs to the animated node on the map, not the list row.
+                visibility = View.GONE
+            }
+
             //TestResult
             val aff = MmkvManager.decodeServerAffiliationInfo(guid)
             holder.itemMainBinding.tvTestResult.text = aff?.getTestDelayString().orEmpty()
@@ -72,7 +79,7 @@ class MainRecyclerAdapter(
             }
 
             //layoutIndicator
-            if (guid == MmkvManager.getSelectServer()) {
+            if (isSelected) {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.color.colorIndicator)
             } else {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(0)

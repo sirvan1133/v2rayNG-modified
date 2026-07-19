@@ -56,6 +56,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     private lateinit var groupPagerAdapter: GroupPagerAdapter
     private var tabMediator: TabLayoutMediator? = null
     private var trafficJob: Job? = null
+    private var geoLocationJob: Job? = null
+    private var preserveMapDuringServerRestart = false
 
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
@@ -98,6 +100,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         setupViewModel()
         SubscriptionUpdater.sync()
         mainViewModel.reloadServerList()
+        updateMapDestination()
 
         checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {
         }
@@ -168,6 +171,11 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
         mainViewModel.isRunning.observe(this) { isRunning ->
             applyRunningState(false, isRunning)
+            if (!isRunning && preserveMapDuringServerRestart) {
+                return@observe
+            }
+            if (isRunning) preserveMapDuringServerRestart = false
+            updateMapDestination(isRunning)
         }
         mainViewModel.startListenBroadcast()
         mainViewModel.initAssets(assets)
@@ -278,6 +286,41 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             setTestState(getString(R.string.connection_not_connected))
             binding.layoutTest.isFocusable = false
         }
+    }
+
+    /** Keeps the visual endpoint tied to the selected profile without affecting connection behaviour. */
+    fun updateMapDestination(active: Boolean = mainViewModel.isRunning.value == true) {
+        val selected = MmkvManager.getSelectServer()
+        val profile = selected?.let { MmkvManager.decodeServerConfig(it) }
+        geoLocationJob?.cancel()
+        if (active) {
+            // First fly from the user's normal public location to the selected endpoint.
+            // This deliberately does not use a name/TLD fallback, avoiding a misleading
+            // intermediate country while the real IP lookup is in progress.
+            geoLocationJob = lifecycleScope.launch(Dispatchers.IO) {
+                val result = IpGeoLocationResolver.serverLocation(profile?.server)
+                if (result != null) withContext(Dispatchers.Main) {
+                    binding.cinematicMap.focusLocation(result.latitude, result.longitude, result.country, result.countryCode, true)
+                }
+                // Do not overwrite the selected server with a second app-level public-IP
+                // request here. Some Android VPN implementations exempt their own process,
+                // which would report the user's source network and make the marker jump back.
+            }
+        } else {
+            // When disconnected, always use the user's ordinary public IP. Selecting a
+            // config must not move the marker until the tunnel is actually turned on.
+            geoLocationJob = lifecycleScope.launch(Dispatchers.IO) {
+                val result = IpGeoLocationResolver.currentPublicLocation()
+                if (result != null) withContext(Dispatchers.Main) {
+                    binding.cinematicMap.focusLocation(result.latitude, result.longitude, result.country, result.countryCode, false)
+                }
+            }
+        }
+    }
+
+    /** Prevents the transient stop event of a server switch from resetting the map to source. */
+    fun preserveMapDuringServerRestart() {
+        preserveMapDuringServerRestart = true
     }
 
     override fun onResume() {

@@ -237,12 +237,15 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
     private fun setSelectServer(guid: String) {
         val selected = MmkvManager.getSelectServer()
         if (guid != selected) {
+            val wasRunning = mainViewModel.isRunning.value == true
+            if (wasRunning) ownerActivity.preserveMapDuringServerRestart()
             MmkvManager.setSelectServer(guid)
+            ownerActivity.updateMapDestination(wasRunning)
             val fromPosition = mainViewModel.getPosition(selected.orEmpty())
             val toPosition = mainViewModel.getPosition(guid)
             adapter.setSelectServer(fromPosition, toPosition)
 
-            if (mainViewModel.isRunning.value == true) {
+            if (wasRunning) {
                 ownerActivity.restartV2Ray()
             }
         }
