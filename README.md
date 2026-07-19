@@ -17,7 +17,6 @@ Personalized v2rayNG with additional features
 - نشانگر زنده با پرچم و نام کشور، پالس، حلقه‌های نورانی و دنبالهٔ داده
 - حرکت نرم دوربین: ابتدا نقشه به مقصد می‌رود و سپس نشانگر اتصال حرکت می‌کند
 - زوم تطبیقی 3× با کش چندسطحی برای حفظ کیفیت نقشه و جلوگیری از پرش یا بارگذاری دوباره
-- تغییر امن بین سرورها بدون تکرار Marker، Teleport شدن یا Crash
 - بهینه‌سازی رندر: لایهٔ ثابت نقشه کش می‌شود و فقط لایه‌های انیمیشنی در هر فریم به‌روزرسانی می‌شوند
 
 ### v2.5.6 — Cinematic VPN World Map
@@ -27,7 +26,6 @@ Personalized v2rayNG with additional features
 - Live endpoint with country flag/name, pulse, radar rings, glow, and a data trail
 - Cinematic motion: the camera travels first, then the connection node follows
 - Adaptive 3× zoom with multi-level map caching for crisp detail without reload flashes
-- Safe server-to-server transitions with no duplicate marker, teleport, or map crash
 - Cached static map layer; only animated effects redraw per frame for smoother performance
 
 
