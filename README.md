@@ -70,11 +70,8 @@ See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for down
 
 https://github.com/sirvan1133/v2rayNG-modified
 
-## Screenshot
+## Screenshots
 
-<div style="width:300px; height:200px; overflow:hidden; border:1px solid #ddd; border-radius:4px;">
-  <a href="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg">
-    <img src="https://raw.githubusercontent.com/sirvan1133/v2rayNG-modified/main/screenshot.jpg"
-         alt="Screenshot" style="width:300px;">
-  </a>
-</div>
+| Light theme | Dark theme |
+| --- | --- |
+| <img src="screenshot-light.png" alt="Cinematic VPN world map — light theme" width="280"> | <img src="screenshot-dark.png" alt="Cinematic VPN world map — dark theme" width="280"> |
