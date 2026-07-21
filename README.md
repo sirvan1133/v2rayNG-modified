@@ -16,6 +16,30 @@ Personalized v2rayNG with additional features
 
 ## تغییرات / Changes
 
+### v2.6.0 — Weather overlay & IP location
+
+- نمایش آب‌وهوای زنده به صورت overlay روی نقشه جهان (آسمان، خورشید، ابر، باران، برف، مه، رعد و برق)
+- دمای هوا در سمت راست صفحه با نمایش کم‌رنگ و شیشه‌ای
+- انیمیشن اسلاید: هنگام اتصال VPN آب‌وهوا از چپ وارد می‌شود، هنگام قطع به راست خارج می‌شود
+- موقعیت آب‌وهوا بر اساس IP (بدون نیاز به GPS)
+- تقویم شمسی ۵ روزه با نمایش وضعیت آب‌وهوا
+- کارت شیشه‌ای اطلاعات آب‌وهوا (رطوبت، باد، دید)
+- رفع باگ: دانلود خودکار فایل geoip-only-cn-private.dat در صورت نبود
+- مخفی شدن خودکار لیست کانفیگ هنگام اتصال VPN
+- افکت شیشه‌ای برای سرور انتخاب شده
+
+### v2.6.0 — Weather overlay & IP location
+
+- Live weather overlay on the world map (sky, sun, clouds, rain, snow, fog, thunder)
+- Temperature displayed on the right side with dimmer glassmorphic style
+- Slide animation: weather slides in from left when VPN connects, slides out to right when disconnected
+- Weather location based on IP (no GPS required)
+- 5-day Persian calendar with weather forecast
+- Glass metrics card (humidity, wind, visibility)
+- Auto-download geoip-only-cn-private.dat if missing
+- Auto-hide server list on VPN connect
+- Glassmorphic selected server effect
+
 ### v2.5.7 — Smooth map rendering
 
 - حذف رندر هم‌زمان چند کش بزرگ نقشه در زمان حرکت
@@ -69,6 +93,19 @@ Personalized v2rayNG with additional features
 به بخش [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) مراجعه کنید.
 
 See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for downloads.
+
+### راهنمای انتخاب فایل APK مناسب
+
+| فایل | توضیحات |
+| --- | --- |
+| `v2rayNG_X.Y.Z_arm64-v8a.apk` | **گوشی‌های جدید (۲۰۱۷ به بعد)** — سامسونگ S8 به بعد، شیائومی MI 6 به بعد، وان‌پلاس ۵ به بعد، گوگل پیکسل ۲ به بعد، هواوی P20 به بعد، تمام گوشی‌های میان‌رده و پرچمدار جدید |
+| `v2rayNG_X.Y.Z_armeabi-v7a.apk` | **گوشی‌های قدیمی (۲۰۱۱ تا ۲۰۱۶)** — سامسونگ S3 تا S7، شیائومی Redmi Note 3/4، هواوی P10 و قدیمی‌تر، گوشی‌های بسیار ارزان قیمت |
+| `v2rayNG_X.Y.Z_x86_64.apk` | **تبلت‌ها و شبیه‌سازهای ۶۴ بیتی** — شبیه‌سازهای اندروید روی کامپیوتر (BlueStacks 5, Nox, LDPlayer) |
+| `v2rayNG_X.Y.Z_x86.apk` | **تبلت‌ها و شبیه‌سازهای ۳۲ بیتی** — شبیه‌سازهای قدیمی (BlueStacks 4 و پایین‌تر) |
+| `v2rayNG_X.Y.Z-fdroid_arm64-v8a.apk` | نسخه F-Droid برای گوشی‌های جدید (arm64-v8a) |
+| `v2rayNG_X.Y.Z-fdroid_armeabi-v7a.apk` | نسخه F-Droid برای گوشی‌های قدیمی (armeabi-v7a) |
+
+> **نکته:** اگر مطمئن نیستید کدام نسخه را دانلود کنید، `arm64-v8a` را انتخاب کنید. اکثر گوشی‌های ۲۰۱۷ به بعد از این معماری پشتیبانی می‌کنند.
 
 ---
 
