@@ -327,10 +327,10 @@ object SettingsManager {
 
         try {
             val geo = arrayOf(AppConfig.GEOSITE_DAT, AppConfig.GEOIP_DAT, AppConfig.GEOIP_ONLY_CN_PRIVATE_DAT)
-            assets.list("")
-                ?.filter { geo.contains(it) }
-                ?.filter { !File(extFolder, it).exists() }
-                ?.forEach {
+            val bundled = assets.list("")?.toSet() ?: emptySet()
+            geo.filter { bundled.contains(it) }
+                .filter { !File(extFolder, it).exists() }
+                .forEach {
                     val target = File(extFolder, it)
                     assets.open(it).use { input ->
                         FileOutputStream(target).use { output ->
@@ -339,6 +339,20 @@ object SettingsManager {
                     }
                     LogUtil.i(AppConfig.TAG, "Copied from apk assets folder to ${target.absolutePath}")
                 }
+            if (!File(extFolder, AppConfig.GEOIP_ONLY_CN_PRIVATE_DAT).exists()) {
+                val target = File(extFolder, AppConfig.GEOIP_ONLY_CN_PRIVATE_DAT)
+                try {
+                    val url = java.net.URL(AppConfig.GEOIP_ONLY_CN_PRIVATE_URL)
+                    url.openStream().use { input ->
+                        java.io.FileOutputStream(target).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    LogUtil.i(AppConfig.TAG, "Downloaded geoip-only-cn-private.dat to ${target.absolutePath}")
+                } catch (e: Exception) {
+                    LogUtil.e(ANG_PACKAGE, "Failed to download geoip-only-cn-private.dat", e)
+                }
+            }
         } catch (e: Exception) {
             LogUtil.e(ANG_PACKAGE, "asset copy failed", e)
         }
