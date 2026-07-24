@@ -11,13 +11,9 @@ All screenshots are captured from v2.7.0 in dark mode.
 
 تمام تصاویر از نسخه 2.7.0 و در حالت شب گرفته شده‌اند.
 
-| Home, vector map & live direct ping | Weather, market & IP location |
-| --- | --- |
-| ![Home screen with live ping](screenshots/home-live-ping-dark.png) | ![Weather, market and map](screenshots/weather-market-map-dark.png) |
-
-### Widget controls
-
-![Localized widget controls](screenshots/widget-settings-dark.png)
+| Home, vector map & live direct ping | Widget controls | Weather, market & IP location |
+| :---: | :---: | :---: |
+| <img src="screenshots/home-live-ping-dark.png" alt="Home screen with live ping" width="320"> | <img src="screenshots/widget-settings-dark.png" alt="Localized widget controls" width="320"> | <img src="screenshots/weather-market-map-dark.png" alt="Weather, market and map" width="320"> |
 
 ## Added features compared with standard v2rayNG
 
