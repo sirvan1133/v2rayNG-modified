@@ -1,123 +1,182 @@
-# v2rayNG Modified
+# v2rayNG Modified — v2.7.0
 
-اولین ویرایش v2ray با نوار مصرف ترافیک و نقشهٔ زندهٔ سینمایی VPN
+A redesigned and feature-enhanced Android client based on
+[v2rayNG](https://github.com/2dust/v2rayNG).
 
-نسخهٔ شخصی‌سازی‌شدهٔ v2rayNG با قابلیت‌های اضافه، از جمله نمایش زندهٔ نقشه و موقعیت اتصال VPN
-
-Personalized v2rayNG with additional features
+نسخه‌ای بازطراحی‌شده و توسعه‌یافته از v2rayNG برای اندروید.
 
 ## Screenshots
 
-| Light theme | Dark theme |
+All screenshots are captured from v2.7.0 in dark mode.
+
+تمام تصاویر از نسخه 2.7.0 و در حالت شب گرفته شده‌اند.
+
+| Home, vector map & live direct ping | Weather, market & IP location |
 | --- | --- |
-| <img src="screenshot-light.png" alt="Cinematic VPN world map — light theme" width="280"> | <img src="screenshot-dark.png" alt="Cinematic VPN world map — dark theme" width="280"> |
+| ![Home screen with live ping](screenshots/home-live-ping-dark.png) | ![Weather, market and map](screenshots/weather-market-map-dark.png) |
 
----
+### Widget controls
 
-## تغییرات / Changes
+![Localized widget controls](screenshots/widget-settings-dark.png)
 
-### v2.6.0 — Weather overlay & IP location
+## Added features compared with standard v2rayNG
 
-- نمایش آب‌وهوای زنده به صورت overlay روی نقشه جهان (آسمان، خورشید، ابر، باران، برف، مه، رعد و برق)
-- دمای هوا در سمت راست صفحه با نمایش کم‌رنگ و شیشه‌ای
-- انیمیشن اسلاید: هنگام اتصال VPN آب‌وهوا از چپ وارد می‌شود، هنگام قطع به راست خارج می‌شود
-- موقعیت آب‌وهوا بر اساس IP (بدون نیاز به GPS)
-- تقویم شمسی ۵ روزه با نمایش وضعیت آب‌وهوا
-- کارت شیشه‌ای اطلاعات آب‌وهوا (رطوبت، باد، دید)
-- رفع باگ: دانلود خودکار فایل geoip-only-cn-private.dat در صورت نبود
-- مخفی شدن خودکار لیست کانفیگ هنگام اتصال VPN
-- افکت شیشه‌ای برای سرور انتخاب شده
+### Redesigned home screen
 
-### v2.6.0 — Weather overlay & IP location
+- Compact configuration cards with a simple translucent gradient and rounded corners
+- Clear animated selection state with a subtle blue outer glow
+- Circular country flags resolved automatically from each server IP
+- Protocol label, live online state, and latency displayed on every card
+- Smooth macOS-style transitions when configurations appear or disappear
+- Unified translucent top and per-configuration overflow menus
+- Background blur while contextual menus are open
+- Redesigned subscription selector and traffic usage bar
+- Stable configuration and traffic layout in both Persian and English modes
+- Translucent drag state instead of a solid white card while reordering configurations
+- Top action panel containing Update, Auto Connect, Clipboard, and overflow actions
 
-- Live weather overlay on the world map (sky, sun, clouds, rain, snow, fog, thunder)
-- Temperature displayed on the right side with dimmer glassmorphic style
-- Slide animation: weather slides in from left when VPN connects, slides out to right when disconnected
-- Weather location based on IP (no GPS required)
-- 5-day Persian calendar with weather forecast
-- Glass metrics card (humidity, wind, visibility)
-- Auto-download geoip-only-cn-private.dat if missing
-- Auto-hide server list on VPN connect
-- Glassmorphic selected server effect
+### Direct live ping and Auto Connect
 
-### v2.5.7 — Smooth map rendering
+- Continuous latency measurement for every configuration
+- Ping tests use the physical/default Internet connection instead of the active VPN
+  tunnel
+- Live ping continues working while the VPN is connected
+- Automatic ping recovery after screen lock or returning from the background
+- Throttled concurrent measurements to reduce battery and network usage
+- **Auto Connect** measures reachable servers and connects to the fastest
+  configuration
 
-- حذف رندر هم‌زمان چند کش بزرگ نقشه در زمان حرکت
-- بهینه‌سازی دنبالهٔ Marker و کاهش ایجاد Shader در هر فریم برای حرکت روان‌تر
+### Cinematic vector IP-location map
 
-### v2.5.7 — Smooth map rendering
+- High-quality vector world map instead of a static map image
+- Animated camera and destination marker when the selected server changes
+- Country flag and country name displayed at the destination
+- Smooth marker trail and motion effects optimized for weaker devices
+- Preloaded map geometry and display lists to reduce movement stutter
+- Daily cache for source/public-IP location to improve startup speed
+- Correct return to the source location after disconnecting the VPN
+- Reliable map restoration when the application returns from the background
+- No live GPS-location marker is drawn over the map
+- Dark and light appearance support
 
-- Removed multi-texture map compositing while moving
-- Optimized the marker trail to reduce per-frame shader creation and improve smoothness
+### Cinematic weather widget
 
-### v2.5.6 — Cinematic VPN World Map
+- Animated weather scene displayed when the configuration list is hidden
+- Cross-dissolve transitions with a transparent background
+- Layered animated clouds with independent depth, speed, and opacity
+- Refined sun, temperature, condition, calendar, and location presentation
+- Current location displayed beside weather data instead of over the sun or map
+- Weather visibility control in the navigation drawer
+- Persian and English controls following the selected application language
+- Dark and light appearance support
 
-- نقشهٔ زندهٔ جهان بر پایهٔ داده‌های واقعی کشورها، نه تصویر پس‌زمینهٔ ثابت
-- تشخیص کشور IP عمومی در حالت قطع اتصال و نمایش کشور سرور در حالت اتصال
-- نشانگر زنده با پرچم و نام کشور، پالس، حلقه‌های نورانی و دنبالهٔ داده
-- حرکت نرم دوربین: ابتدا نقشه به مقصد می‌رود و سپس نشانگر اتصال حرکت می‌کند
-- زوم تطبیقی 3× با کش چندسطحی برای حفظ کیفیت نقشه و جلوگیری از پرش یا بارگذاری دوباره
-- بهینه‌سازی رندر: لایهٔ ثابت نقشه کش می‌شود و فقط لایه‌های انیمیشنی در هر فریم به‌روزرسانی می‌شوند
+### Currency and market widget
 
-### v2.5.6 — Cinematic VPN World Map
+- Lightweight market widget with transparent gradient cards
+- Rates sourced from TGJU and refreshed every five minutes
+- Text-only refreshes to minimize traffic and battery use
+- USD and EUR enabled by default
+- Optional GBP, TRY, Iraqi dinar, and gold entries
+- Dedicated minimal icon for every rate, including Iraqi dinar
+- User-selectable market entries
+- Independent layout that does not overlap the weather widget
+- Persian and English labels plus dark and light appearance support
 
-- Live world map based on real country geometry, not a static background image
-- Public-IP country while disconnected; selected server country while connected
-- Live endpoint with country flag/name, pulse, radar rings, glow, and a data trail
-- Cinematic motion: the camera travels first, then the connection node follows
-- Adaptive 3× zoom with multi-level map caching for crisp detail without reload flashes
-- Cached static map layer; only animated effects redraw per frame for smoother performance
+### Widget controls
 
+- Custom track-and-thumb switches with gray OFF and green ON states
+- Settings appear only while their related widget is enabled
+- Weather and IP-location map behavior remain independent
+- Localized translucent widget settings interface
 
-- سه دکمه در نوار بالا: بروزرسانی، پینگ، افزودن از کلیپ‌بورد
-- حذف اشتراک پیش‌فرض هنگام نصب اولیه
-- دکمه گزارش باگ در منوی کشویی
-- آپدیت خودکار اشتراک‌ها هنگام باز شدن برنامه
-- نمایش نوار مصرف ترافیک در بالای صفحه (مخصوص هر گروه/ساب)
-- نمایش درصد مصرف، حجم مصرف شده، حجم باقی مانده، کل ترافیک و روزهای باقی مانده
-- بررسی خودکار آپدیت روزانه از گیت‌هاب
+### Update and lifecycle reliability
 
+- Automatic GitHub Release update check after application startup
+- Update checks limited to once every 24 hours
+- Popup displayed only when a newer semantic version is available
+- Architecture-aware APK selection for ARM64, ARM32, x86, and x86_64 devices
+- Manual update checker retained in the navigation drawer
+- Improved recovery after screen lock and backgrounding
+- Direct-ping and connection-state recovery without force-closing the application
+- Fixes for disappearing map rendering, widget overlap, duplicate weather elements,
+  configuration selection, and foreground transitions
 
-- Three buttons in toolbar: Update Subscription, Ping All, Add from Clipboard
-- Removed default subscription on fresh install
-- Bug Report button in drawer menu
-- Auto update subscriptions on app open
-- Traffic usage bar at the top (per group/subscription)
-- Show usage percent, used, remaining, total traffic and days left
-- Auto daily update check from GitHub
+## امکانات اضافه‌شده نسبت به v2rayNG معمولی
 
----
+### صفحه اصلی بازطراحی‌شده
 
-## دریافت / Download
+- کارت‌های جمع‌وجور کانفیگ با گرادینت ساده، شفافیت کنترل‌شده و گوشه‌های خم
+- نمایش واضح کانفیگ انتخابی با انیمیشن و Glow آبی ملایم به سمت بیرون
+- تعیین خودکار پرچم کشور از روی IP هر کانفیگ و نمایش دایره‌ای آن
+- نمایش پروتکل، وضعیت آنلاین و پینگ زنده روی هر کارت
+- ترنزیشن نرم شبیه macOS برای ظاهر و مخفی‌شدن کانفیگ‌ها
+- منوی نیمه‌شفاف و هماهنگ برای سه‌نقطه بالای صفحه و سه‌نقطه کانفیگ‌ها
+- تارشدن پس‌زمینه هنگام بازبودن منوها
+- بازطراحی انتخاب‌گر اشتراک‌ها و نوار مصرف ترافیک
+- ثابت‌ماندن جهت بخش کانفیگ‌ها و ترافیک در زبان فارسی و انگلیسی
+- حالت نیمه‌شفاف هنگام جابه‌جایی کانفیگ به‌جای سفیدشدن کامل کارت
+- پنل بالایی شامل Update، اتصال خودکار، Clipboard و منوی بیشتر
 
-به بخش [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) مراجعه کنید.
+### پینگ زنده مستقیم و اتصال خودکار
 
-See [Releases](https://github.com/sirvan1133/v2rayNG-modified/releases) for downloads.
+- تست پیوسته پینگ تمام کانفیگ‌ها
+- انجام تست پینگ از اینترنت اصلی گوشی و نه از تونل VPN فعال
+- ادامه تست پینگ هنگام روشن‌بودن VPN
+- بازیابی خودکار پینگ پس از قفل صفحه یا بازگشت از پس‌زمینه
+- محدودسازی تست‌های هم‌زمان برای کاهش مصرف اینترنت و باتری
+- گزینه **اتصال خودکار** برای سنجش سرورها و اتصال به سریع‌ترین کانفیگ در دسترس
 
-### راهنمای انتخاب فایل APK مناسب
+### نقشه برداری سینمایی لوکیشن IP
 
-| فایل | توضیحات |
-| --- | --- |
-| `v2rayNG_X.Y.Z_arm64-v8a.apk` | **گوشی‌های جدید (۲۰۱۷ به بعد)** — سامسونگ S8 به بعد، شیائومی MI 6 به بعد، وان‌پلاس ۵ به بعد، گوگل پیکسل ۲ به بعد، هواوی P20 به بعد، تمام گوشی‌های میان‌رده و پرچمدار جدید |
-| `v2rayNG_X.Y.Z_armeabi-v7a.apk` | **گوشی‌های قدیمی (۲۰۱۱ تا ۲۰۱۶)** — سامسونگ S3 تا S7، شیائومی Redmi Note 3/4، هواوی P10 و قدیمی‌تر، گوشی‌های بسیار ارزان قیمت |
-| `v2rayNG_X.Y.Z_x86_64.apk` | **تبلت‌ها و شبیه‌سازهای ۶۴ بیتی** — شبیه‌سازهای اندروید روی کامپیوتر (BlueStacks 5, Nox, LDPlayer) |
-| `v2rayNG_X.Y.Z_x86.apk` | **تبلت‌ها و شبیه‌سازهای ۳۲ بیتی** — شبیه‌سازهای قدیمی (BlueStacks 4 و پایین‌تر) |
-| `v2rayNG_X.Y.Z-fdroid_arm64-v8a.apk` | نسخه F-Droid برای گوشی‌های جدید (arm64-v8a) |
-| `v2rayNG_X.Y.Z-fdroid_armeabi-v7a.apk` | نسخه F-Droid برای گوشی‌های قدیمی (armeabi-v7a) |
+- نقشه برداری باکیفیت جهان به‌جای تصویر ثابت
+- حرکت انیمیشنی دوربین و نشانگر مقصد هنگام تغییر کانفیگ
+- نمایش پرچم و نام کشور در مقصد
+- Trail و افکت‌های حرکتی بهینه‌شده برای گوشی‌های ضعیف
+- پیش‌بارگذاری هندسه و لایه‌های نقشه برای کاهش لگ
+- کش روزانه IP و لوکیشن مبدا برای اجرای سریع‌تر
+- بازگشت صحیح نقشه به مبدا پس از خاموش‌شدن VPN
+- بازیابی نقشه بعد از برگشت برنامه از پس‌زمینه
+- حذف نشانگر GPS زنده از روی نقشه
+- پشتیبانی از تم روشن و تاریک
 
-> **نکته:** اگر مطمئن نیستید کدام نسخه را دانلود کنید، `arm64-v8a` را انتخاب کنید. اکثر گوشی‌های ۲۰۱۷ به بعد از این معماری پشتیبانی می‌کنند.
+### ویجت سینمایی هواشناسی
 
----
+- نمایش انیمیشنی هواشناسی هنگام مخفی‌شدن کانفیگ‌ها
+- ترنزیشن Cross Dissolve با پس‌زمینه شفاف
+- ابرهای چندلایه با عمق، سرعت و شفافیت متفاوت
+- طراحی بهتر خورشید، دما، وضعیت هوا، تقویم و نام لوکیشن
+- نمایش Current Location کنار اطلاعات هواشناسی و نه روی خورشید یا نقشه
+- امکان روشن یا خاموش‌کردن هواشناسی از منوی همبرگری
+- کنترل‌های فارسی و انگلیسی هماهنگ با زبان برنامه
+- پشتیبانی از تم روشن و تاریک
 
-## حمایت / Donate
+### ویجت قیمت ارز و طلا
 
-**USDT (BEP20):** `0xAab8aE16283C399e188328b9b06cECCAd47FABDe`
+- کارت‌های مینیمال با گرادینت شفاف
+- دریافت نرخ‌ها از TGJU و بروزرسانی هر پنج دقیقه
+- بروزرسانی فقط متن قیمت‌ها برای کاهش مصرف اینترنت و باتری
+- نمایش پیش‌فرض دلار و یورو
+- امکان افزودن پوند، لیر ترکیه، دینار عراق و طلا
+- آیکون مینیمال اختصاصی برای هر مورد، از جمله دینار عراق
+- امکان انتخاب ارزهای قابل نمایش
+- جلوگیری از هم‌پوشانی ویجت قیمت‌ها و هواشناسی
+- پشتیبانی فارسی، انگلیسی و تم روشن و تاریک
 
-**TRX:** `0xAab8aE16283C399e188328b9b06cECCAd47FABDe`
+### کنترل ویجت‌ها
 
----
+- سوییچ سفارشی Track/Thumb با بدنه خاکستری در حالت خاموش و سبز در حالت روشن
+- نمایش تنظیمات هر ویجت فقط هنگام فعال‌بودن همان ویجت
+- مستقل‌بودن رفتار هواشناسی و نقشه لوکیشن IP
+- رابط نیمه‌شفاف و بومی‌سازی‌شده تنظیمات ویجت‌ها
 
-## Source
+### بروزرسانی و پایداری
 
-https://github.com/sirvan1133/v2rayNG-modified
-
+- بررسی خودکار GitHub Release بعد از اجرای برنامه
+- محدودشدن بررسی آپدیت به حداکثر یک‌بار در هر ۲۴ ساعت
+- نمایش پاپ‌آپ فقط هنگام وجود نسخه جدیدتر
+- انتخاب خودکار APK متناسب با معماری دستگاه
+- حفظ بخش بررسی دستی آپدیت در منوی همبرگری
+- بازیابی بهتر برنامه پس از قفل صفحه و بازگشت از پس‌زمینه
+- بازیابی پینگ و وضعیت اتصال بدون نیاز به بستن اجباری برنامه
+- رفع مشکلات محوشدن نقشه، هم‌پوشانی ویجت‌ها، تکرار عناصر هواشناسی، انتخاب کانفیگ
+  و ترنزیشن‌های برنامه

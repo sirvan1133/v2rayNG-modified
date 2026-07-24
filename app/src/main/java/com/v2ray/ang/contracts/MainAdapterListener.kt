@@ -1,5 +1,6 @@
 package com.v2ray.ang.contracts
 
+import android.view.View
 import com.v2ray.ang.dto.entities.ProfileItem
 
 interface MainAdapterListener : BaseAdapterListener {
@@ -8,6 +9,6 @@ interface MainAdapterListener : BaseAdapterListener {
 
     fun onSelectServer(guid: String)
 
-    fun onShare(guid: String, profile: ProfileItem, position: Int, more: Boolean)
+    fun onShare(guid: String, profile: ProfileItem, position: Int, more: Boolean, anchor: View)
 
 }

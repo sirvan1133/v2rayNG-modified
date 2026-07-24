@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.v2ray.ang.ui.WidgetToggleView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_switch"
+    android:layout_width="52dp"
+    android:layout_height="28dp"
+    android:contentDescription="@string/widget_toggle_description" />

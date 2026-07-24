@@ -462,4 +462,50 @@
         <item>WebDAV</item>
     </string-array>
 
+    <!-- Weather scene -->
+    <string name="weather_current_location">موقعیت فعلی</string>
+    <string name="weather_waiting_for_location">در حال مکان‌یابی…</string>
+    <string name="weather_loading">در حال دریافت آب‌وهوا…</string>
+    <string name="weather_no_permission">برای نمایش آب‌وهوا اجازه موقعیت مکانی لازم است</string>
+    <string name="weather_feels_like">دمای احساس‌شده %1$d°</string>
+    <string name="weather_feels_like_label">دمای احساس‌شده</string>
+    <string name="weather_humidity">رطوبت</string>
+    <string name="weather_wind">سرعت باد</string>
+    <string name="weather_wind_value">%1$d کیلومتر/ساعت</string>
+    <string name="weather_offline_cached">آفلاین · %1$s</string>
+    <string name="weather_clear_day">آفتابی</string>
+    <string name="weather_clear_night">صاف و مهتابی</string>
+    <string name="weather_partly_cloudy">نیمه‌ابری</string>
+    <string name="weather_cloudy">ابری</string>
+    <string name="weather_fog">مه‌آلود</string>
+    <string name="weather_drizzle">باران ریز</string>
+    <string name="weather_rain">بارانی</string>
+    <string name="weather_snow">برفی</string>
+    <string name="weather_thunder">رعد و برق</string>
+
+    <string name="widget_weather_toggle">نمایش هواشناسی</string>
+    <string name="widget_market_toggle">نمایش قیمت‌ها</string>
+    <string name="widget_market_items">انتخاب قیمت‌ها</string>
+    <string name="widget_map_style">سبک نقشه و نشانگر</string>
+    <string name="market_today">بازار امروز</string>
+    <string name="market_toman">%1$s تومان</string>
+    <string name="market_cached">نمایش آخرین قیمت ذخیره‌شده</string>
+    <string name="market_source">منبع: TGJU</string>
+    <string name="market_done">انجام شد</string>
+    <string name="map_style_atlas">اطلس کلاسیک</string>
+    <string name="map_style_wire">شبکه دیجیتال</string>
+    <string name="map_style_dots">سرزمین نقطه‌ای</string>
+    <string name="map_style_topo">توپوگرافی</string>
+    <string name="map_style_minimal">کره متمرکز</string>
+    <string name="asset_usd">دلار</string>
+    <string name="asset_eur">یورو</string>
+    <string name="asset_gold">طلای ۱۸ عیار</string>
+    <string name="asset_gbp">پوند انگلیس</string>
+    <string name="asset_try">لیر ترکیه</string>
+    <string name="asset_iqd">دینار عراق</string>
+    <string name="widget_toggle_description">روشن یا خاموش کردن ویجت</string>
+    <string name="auto_connect">اتصال خودکار</string>
+    <string name="auto_connect_testing">در حال یافتن سریع‌ترین کانفیگ…</string>
+    <string name="auto_connect_selected">اتصال به بهترین کانفیگ (%1$d میلی‌ثانیه)</string>
+    <string name="auto_connect_unavailable">کانفیگ قابل اتصال پیدا نشد</string>
 </resources>

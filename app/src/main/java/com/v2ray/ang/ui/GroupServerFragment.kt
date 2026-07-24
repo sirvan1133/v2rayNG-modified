@@ -108,21 +108,23 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
      * @param shareOptions The list of share options
      * @param skip The number of options to skip
      */
-    private fun shareServer(guid: String, profile: ProfileItem, position: Int, shareOptions: List<String>, skip: Int) {
-        AlertDialog.Builder(ownerActivity).setItems(shareOptions.toTypedArray()) { _, i ->
-            try {
-                when (i + skip) {
-                    0 -> showQRCode(guid)
-                    1 -> share2Clipboard(guid)
-                    2 -> shareFullContent(guid)
-                    3 -> editServer(guid, profile)
-                    4 -> removeServer(guid, position)
-                    else -> ownerActivity.toast("else")
+    private fun shareServer(guid: String, profile: ProfileItem, position: Int, shareOptions: List<String>, skip: Int, anchor: android.view.View) {
+        val items = shareOptions.mapIndexed { i, option ->
+            GlassMenuItem(label = option) {
+                try {
+                    when (i + skip) {
+                        0 -> showQRCode(guid)
+                        1 -> share2Clipboard(guid)
+                        2 -> shareFullContent(guid)
+                        3 -> editServer(guid, profile)
+                        4 -> removeServer(guid, position)
+                    }
+                } catch (e: Exception) {
+                    LogUtil.e(AppConfig.TAG, "Error when sharing server", e)
                 }
-            } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "Error when sharing server", e)
             }
-        }.show()
+        }
+        GlassMenuHelper.show(anchor, items)
     }
 
     /**
@@ -273,18 +275,14 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
             setSelectServer(guid)
         }
 
-        override fun onShare(guid: String, profile: ProfileItem, position: Int, more: Boolean) {
+        override fun onShare(guid: String, profile: ProfileItem, position: Int, more: Boolean, anchor: android.view.View) {
             val isCustom = profile.configType.isComplexType()
 
-            val (shareOptions, skip) = if (more) {
-                val options = if (isCustom) share_method_more.asList().takeLast(3) else share_method_more.asList()
-                options to if (isCustom) 2 else 0
-            } else {
-                val options = if (isCustom) share_method.asList().takeLast(1) else share_method.asList()
-                options to if (isCustom) 2 else 0
-            }
+            val options = share_method_more.asList()
+            val shareOptions = if (isCustom) options.takeLast(3) else options
+            val skip = if (isCustom) 2 else 0
 
-            shareServer(guid, profile, position, shareOptions, skip)
+            shareServer(guid, profile, position, shareOptions, skip, anchor)
         }
     }
 

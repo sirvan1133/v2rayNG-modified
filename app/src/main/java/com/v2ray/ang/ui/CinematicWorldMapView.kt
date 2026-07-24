@@ -1,7 +1,9 @@
 package com.v2ray.ang.ui
 
 import android.content.Context
+import android.app.ActivityManager
 import android.graphics.*
+import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Choreographer
@@ -26,12 +28,16 @@ class CinematicWorldMapView @JvmOverloads constructor(
     private data class Country(val name: String, val path: Path)
 
     private val countries = mutableListOf<Country>()
+    private var atlasRenderNode: RenderNode? = null
+    private var atlasPicture: Picture? = null
+    private val lowRamMode = (context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
+        ?.isLowRamDevice == true
     private val surfaceColor = resolveThemeColor(com.google.android.material.R.attr.colorSurface)
     private val isLightTheme = ColorUtils.calculateLuminance(surfaceColor) > .5
-    private val oceanColor = if (isLightTheme) Color.rgb(250, 249, 255) else Color.rgb(5, 16, 26)
-    private val landColor = if (isLightTheme) Color.rgb(239, 237, 251) else Color.rgb(13, 42, 61)
-    private val borderColor = if (isLightTheme) Color.rgb(210, 202, 241) else Color.rgb(73, 164, 192)
-    private val accentColor = if (isLightTheme) Color.rgb(100, 73, 177) else Color.rgb(94, 238, 255)
+    private var oceanColor = if (isLightTheme) Color.rgb(250, 249, 255) else Color.rgb(5, 16, 26)
+    private var landColor = if (isLightTheme) Color.rgb(239, 237, 251) else Color.rgb(13, 42, 61)
+    private var borderColor = if (isLightTheme) Color.rgb(210, 202, 241) else Color.rgb(73, 164, 192)
+    private var accentColor = if (isLightTheme) Color.rgb(100, 73, 177) else Color.rgb(94, 238, 255)
     private val activeColor = Color.rgb(132, 242, 112)
     private val coastPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = landColor }
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -39,7 +45,6 @@ class CinematicWorldMapView @JvmOverloads constructor(
     }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
-    private val mapPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     private val activationPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val edgeFadePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val trailPath = Path()
@@ -48,11 +53,6 @@ class CinematicWorldMapView @JvmOverloads constructor(
         textSize = 11f * resources.displayMetrics.scaledDensity
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
-    private data class MapCache(val bitmap: Bitmap, val scale: Float)
-    // A single high-detail vector raster cache remains GPU-resident for the
-    // whole session. Avoiding an LOD blend removes the frame hitch that occurred
-    // while two large world textures were composited during marker movement.
-    private var mapCache: MapCache? = null
     private var camera = GeoPoint(35.69, 51.39) // a neutral default near the user's region
     private var source = camera
     private var destination = camera
@@ -81,14 +81,12 @@ class CinematicWorldMapView @JvmOverloads constructor(
     // therefore use a stable world-space scale rather than width/height (which are 0
     // at that time).  A 4096px Mercator world also keeps the camera genuinely zoomed.
     private val worldScale = 4096f
-    // 4096px is the largest broadly safe GPU texture on Android.  Keeping one
-    // cache at this size avoids both texture swaps and oversized-GPU stalls.
-    private val mapTextureScale = 1f
-
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
+        // Preload and parse all Natural Earth vector geometry once. No bitmap
+        // tiles or raster snapshots are created at any stage.
         loadCountries()
-        buildMapTexture()
+        preloadVectorAtlas()
     }
 
     /** Called by MainActivity whenever the selected server changes. */
@@ -110,6 +108,15 @@ class CinematicWorldMapView @JvmOverloads constructor(
         beginTransition(target, active)
     }
 
+    /** Removes stale source/server coordinates while a fresh GeoIP lookup runs. */
+    fun clearLocation() {
+        hasEndpoint = false
+        labelReady = false
+        isAnimating = false
+        markerState = MarkerState.IDLE
+        invalidate()
+    }
+
     /** Cancels any in-flight route by starting the next route from the visible state. */
     private fun beginTransition(target: Endpoint, active: Boolean) {
         source = camera
@@ -124,7 +131,8 @@ class CinematicWorldMapView @JvmOverloads constructor(
         val distance = haversine(source, destination)
         // A longer camera flight and a delayed marker make the route feel like a
         // camera leading a live signal rather than two objects teleporting.
-        animationDuration = (3_000L + (distance / 20_000.0 * 2_200).toLong()).coerceIn(3_000L, 5_400L) * 1_000_000
+        animationDuration = (3_000L + (distance / 20_000.0 * 2_200).toLong())
+            .coerceIn(3_000L, 5_400L) * 1_000_000
         isAnimating = true
         markerState = MarkerState.MOVING
         Choreographer.getInstance().postFrameCallback(this)
@@ -137,7 +145,24 @@ class CinematicWorldMapView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        alpha = 1f
+        lastFrameNanos = 0L
+        invalidate()
         Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        if (visibility == VISIBLE) {
+            alpha = 1f
+            lastFrameNanos = 0L
+            // A backgrounded hardware window may lose its GPU display list.
+            // Re-record from already parsed vector Paths; no file/network reload.
+            preloadVectorAtlas()
+            invalidate()
+            Choreographer.getInstance().removeFrameCallback(this)
+            Choreographer.getInstance().postFrameCallback(this)
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -146,6 +171,10 @@ class CinematicWorldMapView @JvmOverloads constructor(
     }
 
     override fun doFrame(frameTimeNanos: Long) {
+        if (lowRamMode && lastFrameNanos != 0L && frameTimeNanos - lastFrameNanos < 30_000_000L) {
+            Choreographer.getInstance().postFrameCallback(this)
+            return
+        }
         val dt = if (lastFrameNanos == 0L) 0f else ((frameTimeNanos - lastFrameNanos) / 1_000_000_000f)
         lastFrameNanos = frameTimeNanos
         pulsePhase += dt * 0.9f
@@ -181,54 +210,65 @@ class CinematicWorldMapView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(oceanColor)
-        drawMapWithMotionBlur(canvas)
+        drawVectorMap(canvas)
 
         val progress = if (isAnimating) ((System.nanoTime() - animationStart).toDouble() / animationDuration).toFloat().coerceIn(0f, 1f) else 1f
-        if (isAnimating) drawPacket(canvas, markerProgress(progress))
-        if (hasEndpoint) drawEndpoint(canvas, markerPosition, isAnimating)
+        val markerProgress = markerProgress(progress)
+        if (isAnimating) drawPacket(canvas, markerProgress)
+        // While connecting, do not tint the user's original location green.
+        // The live node appears only after it has actually left the source.
+        if (hasEndpoint && (!connected || !isAnimating || markerProgress > .055f)) {
+            drawEndpoint(canvas, markerPosition, isAnimating)
+        }
         drawActivationSignal(canvas)
         drawEdgeFade(canvas)
     }
 
-    private fun buildMapTexture() {
-        mapCache?.bitmap?.recycle()
-        val bitmap = Bitmap.createBitmap((worldScale * mapTextureScale).toInt(), (worldScale * mapTextureScale).toInt(), Bitmap.Config.RGB_565)
-        val c = Canvas(bitmap)
-        c.drawColor(oceanColor)
-        c.save()
-        c.scale(mapTextureScale, mapTextureScale)
-        for (country in countries) { c.drawPath(country.path, coastPaint); c.drawPath(country.path, borderPaint) }
-        c.restore()
-        mapCache = MapCache(bitmap, mapTextureScale)
+    /**
+     * Pure vector renderer. Geometry is preloaded, while pan and zoom are only
+     * GPU matrix transforms. This avoids tile loading and bitmap resampling
+     * during the animated marker flight.
+     */
+    private fun drawVectorMap(canvas: Canvas) {
+        val current = project(camera)
+        canvas.save()
+        canvas.translate(width / 2f, height / 2f)
+        canvas.scale(cameraZoom, cameraZoom)
+        canvas.translate(-current.x, -current.y)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && canvas.isHardwareAccelerated) {
+            atlasRenderNode?.let(canvas::drawRenderNode)
+        } else {
+            atlasPicture?.let(canvas::drawPicture)
+        }
+        canvas.restore()
     }
 
-    /** A cheap, hardware-accelerated camera-motion blur: two translucent cached frames. */
-    private fun drawMapWithMotionBlur(canvas: Canvas) {
-        val cache = mapCache ?: return
-        val current = project(camera)
-        fun drawCached(alpha: Int, blurX: Float = 0f, blurY: Float = 0f) {
-            mapPaint.alpha = alpha
-            canvas.save()
-            canvas.translate(width / 2f + blurX, height / 2f + blurY)
-            canvas.scale(cameraZoom / cache.scale, cameraZoom / cache.scale)
-            canvas.translate(-current.x * cache.scale, -current.y * cache.scale)
-            canvas.drawBitmap(cache.bitmap, 0f, 0f, mapPaint)
-            canvas.restore()
+    /**
+     * Records the complete vector atlas once. RenderNode/Picture store drawing
+     * commands and paths, not pixels, so zoom remains sharp without repeating
+     * country-path traversal on the UI thread every frame.
+     */
+    private fun preloadVectorAtlas() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            atlasRenderNode = RenderNode("classic-vector-atlas").apply {
+                setPosition(0, 0, worldScale.toInt(), worldScale.toInt())
+                val recordingCanvas = beginRecording()
+                for (country in countries) {
+                    recordingCanvas.drawPath(country.path, coastPaint)
+                    recordingCanvas.drawPath(country.path, borderPaint)
+                }
+                endRecording()
+            }
+        } else {
+            atlasPicture = Picture().apply {
+                val recordingCanvas = beginRecording(worldScale.toInt(), worldScale.toInt())
+                for (country in countries) {
+                    recordingCanvas.drawPath(country.path, coastPaint)
+                    recordingCanvas.drawPath(country.path, borderPaint)
+                }
+                endRecording()
+            }
         }
-        if (isAnimating) {
-            val from = project(source)
-            val to = project(destination)
-            val dx = (to.x - from.x).coerceIn(-1_000f, 1_000f)
-            val dy = (to.y - from.y).coerceIn(-1_000f, 1_000f)
-            val length = hypot(dx, dy).coerceAtLeast(1f)
-            val strength = (7f * cameraZoom).coerceAtMost(15f)
-            val x = dx / length * strength
-            val y = dy / length * strength
-            // One subtle trailing sample is enough for motion blur.  Rendering a
-            // second full-size sample was the main source of dropped frames.
-            drawCached(44, -x, -y)
-        }
-        drawCached(255)
     }
 
     private fun drawPacket(canvas: Canvas, raw: Float) {
@@ -237,7 +277,7 @@ class CinematicWorldMapView @JvmOverloads constructor(
         // dot appear below the destination during a country change.
         val packetT = raw
         val p = screenPoint(markerPosition)
-        val tailSteps = 12
+        val tailSteps = 8
         trailPath.reset()
         var tailX = p.x
         var tailY = p.y
@@ -247,16 +287,18 @@ class CinematicWorldMapView @JvmOverloads constructor(
             if (i == tailSteps) { trailPath.moveTo(a.x, a.y); tailX = a.x; tailY = a.y } else trailPath.lineTo(a.x, a.y)
         }
         linePaint.shader = LinearGradient(tailX, tailY, p.x, p.y, Color.TRANSPARENT, ColorUtils.setAlphaComponent(endpointColor(), 205), Shader.TileMode.CLAMP)
-        linePaint.strokeWidth = 3.2f
+        linePaint.strokeWidth = 2.4f
         canvas.drawPath(trailPath, linePaint)
         linePaint.shader = null
         // A few inexpensive particles give the trail texture without allocating
         // a gradient for every segment.
         glowPaint.color = ColorUtils.setAlphaComponent(endpointColor(), 120)
-        for (i in 3..9 step 3) {
-            val t = (packetT - i / tailSteps.toFloat() * .28f).coerceAtLeast(0f)
-            val particle = screenPoint(interpolate(markerStart, destination, cinematicEase(t)))
-            canvas.drawCircle(particle.x, particle.y, 1.6f, glowPaint)
+        if (!lowRamMode) {
+            for (i in 3..9 step 3) {
+                val t = (packetT - i / tailSteps.toFloat() * .28f).coerceAtLeast(0f)
+                val particle = screenPoint(interpolate(markerStart, destination, cinematicEase(t)))
+                canvas.drawCircle(particle.x, particle.y, 1.6f, glowPaint)
+            }
         }
     }
 
@@ -267,10 +309,14 @@ class CinematicWorldMapView @JvmOverloads constructor(
         val activeStrength = .72f + connectionBlend * .28f
         val color = endpointColor()
         val base = 18f + breath * 8f
-        glowPaint.shader = RadialGradient(p.x, p.y, base * 3.5f, intArrayOf(ColorUtils.setAlphaComponent(color, (105 * activeStrength).toInt()), ColorUtils.setAlphaComponent(color, 16), Color.TRANSPARENT), null, Shader.TileMode.CLAMP)
-        canvas.drawCircle(p.x, p.y, base * 3.2f, glowPaint); glowPaint.shader = null
-        for (ring in 0..2) {
-            val phase = (breath + ring / 3f) % 1f
+        if (!lowRamMode) {
+            glowPaint.shader = RadialGradient(p.x, p.y, base * 3.5f, intArrayOf(ColorUtils.setAlphaComponent(color, (105 * activeStrength).toInt()), ColorUtils.setAlphaComponent(color, 16), Color.TRANSPARENT), null, Shader.TileMode.CLAMP)
+            canvas.drawCircle(p.x, p.y, base * 3.2f, glowPaint)
+            glowPaint.shader = null
+        }
+        val ringCount = if (lowRamMode) 1 else 3
+        for (ring in 0 until ringCount) {
+            val phase = (breath + ring / ringCount.toFloat()) % 1f
             linePaint.color = ColorUtils.setAlphaComponent(color, ((1f - phase) * 155 * arrival * activeStrength).toInt())
             linePaint.strokeWidth = 1.3f
             canvas.drawCircle(p.x, p.y, base + phase * 36f, linePaint)

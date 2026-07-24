@@ -1,21 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/view_height_dp160"
-    android:background="@drawable/nav_header_bg"
+    android:layout_height="wrap_content"
+    android:background="@color/tg_primary"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="@dimen/padding_spacing_dp16">
+    android:paddingTop="48dp"
+    android:paddingBottom="20dp">
+
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="12dp">
+
+        <View
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/tg_avatar_circle_bg" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="12dp"
+            android:src="@drawable/ic_app_icon_circle"
+            android:contentDescription="@string/app_name" />
+    </FrameLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:fontFamily="@font/montserrat_thin"
         android:gravity="center"
-        android:paddingTop="@dimen/padding_spacing_dp8"
         android:text="@string/app_name"
-        android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+        android:textColor="@color/tg_onPrimary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:gravity="center"
+        android:text="ویرایش شده توسط s.ahmadi"
+        android:textColor="#B3FFFFFF"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif" />
 
 </LinearLayout>

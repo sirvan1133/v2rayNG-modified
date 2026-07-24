@@ -2,24 +2,29 @@ package com.v2ray.ang.ui
 
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.net.VpnService
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.tabs.TabLayoutMediator
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.CoreServiceManager
@@ -40,8 +45,13 @@ import com.v2ray.ang.dto.CheckUpdateResult
 import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
+import com.v2ray.ang.weather.WeatherMapAlternator
+import com.v2ray.ang.market.MarketRatesController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -54,10 +64,29 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     val mainViewModel: MainViewModel by viewModels()
     private lateinit var groupPagerAdapter: GroupPagerAdapter
-    private var tabMediator: TabLayoutMediator? = null
+    private lateinit var subGroupAdapter: SubGroupAdapter
     private var trafficJob: Job? = null
     private var geoLocationJob: Job? = null
     private var preserveMapDuringServerRestart = false
+    private var weatherAlternator: WeatherMapAlternator? = null
+    private var marketController: MarketRatesController? = null
+
+    /** Fades the server list away while connected so the scenery shows through. */
+    private val configListAutoHider by lazy {
+        ConfigListAutoHider(
+            this,
+            listOf(binding.rvSubGroups, binding.viewPager, binding.layoutTest),
+            onVisibilityChanged = { configsVisible ->
+                if (configsVisible) {
+                    weatherAlternator?.hideOverlay()
+                    marketController?.setSceneVisible(false)
+                } else {
+                    weatherAlternator?.showOverlayAfterDelay(4_000L)
+                    marketController?.setSceneVisible(true)
+                }
+            }
+        )
+    }
 
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
@@ -77,7 +106,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        setupToolbar(binding.toolbar, false, getString(R.string.title_server))
+
+        binding.toolbar.title = ""
 
         // setup viewpager and tablayout
         groupPagerAdapter = GroupPagerAdapter(this, emptyList())
@@ -86,15 +116,14 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
         // setup navigation drawer
         setupNavigationDrawer()
+        marketController = MarketRatesController(this, binding.marketRates)
 
-        binding.fab.setOnClickListener { handleFabAction() }
+        setupToggleWebView()
         binding.layoutTest.setOnClickListener { handleLayoutTestClick() }
         binding.btnUpdateSub.setOnClickListener { importConfigViaSub() }
-        binding.btnPingAll.setOnClickListener {
-            toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
-            mainViewModel.testAllRealPing()
-        }
+        binding.btnAutoConnect.setOnClickListener { autoConnectBestServer() }
         binding.btnAddClipboard.setOnClickListener { importClipboard() }
+        binding.btnMore.setOnClickListener { showMainGlassMenu(it) }
 
         setupGroupTab()
         setupViewModel()
@@ -102,12 +131,32 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         mainViewModel.reloadServerList()
         updateMapDestination()
 
-        checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {
+        checkAndRequestPermissionWithResult(PermissionType.POST_NOTIFICATIONS) { granted ->
+            if (!granted) {
+                toast("${getString(R.string.toast_permission_denied)}  ${PermissionType.POST_NOTIFICATIONS.getLabel()}")
+            }
+            // PermissionHelper keeps one pending callback, so the location request
+            // must wait until the notification flow has fully settled.
+            setupWeatherScene()
         }
 
         lifecycleScope.launch {
             delay(3000)
             checkForUpdatesAuto()
+        }
+    }
+
+    /**
+     * The weather pane alternates with the world map every 10 s.  Permission is
+     * requested once; on denial the alternator still runs against cached data
+     * (or stays on the map if no snapshot exists yet).
+     */
+    private fun setupWeatherScene() {
+        val alternator = WeatherMapAlternator(this, binding.cinematicMap, binding.cinematicWeather)
+        weatherAlternator = alternator
+        alternator.setEnabled(MmkvManager.decodeSettingsBool("weather_scene_enabled", true))
+        checkAndRequestPermissionWithResult(PermissionType.LOCATION) {
+            alternator.start()
         }
     }
 
@@ -154,6 +203,20 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         toggle.syncState()
         binding.navView.setNavigationItemSelectedListener(this)
 
+        // Telegram-style: show app version at the bottom of the drawer
+        try {
+            val pInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = pInfo.versionName ?: ""
+            val navMenu = binding.navView.menu
+            val placeholderItem = navMenu.findItem(R.id.placeholder)
+            placeholderItem?.let {
+                it.title = "v2rayNG $versionName"
+                it.isEnabled = false
+            }
+        } catch (_: Exception) {
+        }
+        setupWidgetToggles()
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -171,6 +234,11 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
         mainViewModel.isRunning.observe(this) { isRunning ->
             applyRunningState(false, isRunning)
+            configListAutoHider.onConnectionChanged(isRunning)
+            weatherAlternator?.nudgeRefresh()
+            if (!isRunning) {
+                weatherAlternator?.hideOverlay()
+            }
             if (!isRunning && preserveMapDuringServerRestart) {
                 return@observe
             }
@@ -185,54 +253,81 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         val groups = mainViewModel.getSubscriptions(this)
         groupPagerAdapter.update(groups)
 
-        tabMediator?.detach()
-        tabMediator = TabLayoutMediator(binding.tabGroup, binding.viewPager) { tab, position ->
-            groupPagerAdapter.groups.getOrNull(position)?.let {
-                tab.text = it.remarks
-                tab.tag = it.id
+        val names = groups.map { it.remarks }
+        if (!::subGroupAdapter.isInitialized) {
+            subGroupAdapter = SubGroupAdapter { position ->
+                binding.viewPager.setCurrentItem(position, true)
             }
-        }.also { it.attach() }
+            binding.rvSubGroups.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false)
+            binding.rvSubGroups.adapter = subGroupAdapter
+        }
+        subGroupAdapter.submitList(names)
 
         val targetIndex = groups.indexOfFirst { it.id == mainViewModel.subscriptionId }.takeIf { it >= 0 } ?: (groups.size - 1)
         binding.viewPager.setCurrentItem(targetIndex, false)
+        subGroupAdapter.setSelected(targetIndex)
 
-        binding.tabGroup.isVisible = groups.size > 1
+        binding.rvSubGroups.isVisible = groups.size > 1
+
+        binding.viewPager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                subGroupAdapter.setSelected(position)
+                val group = groups.getOrNull(position) ?: return@onPageSelected
+                mainViewModel.subscriptionId = group.id
+            }
+        })
+
         refreshGroupTabTitles(true)
     }
 
     fun refreshGroupTabTitles(refreshAll: Boolean = false) {
-        val groupsToRefresh = if (refreshAll || mainViewModel.subscriptionId.isEmpty()) {
-            groupPagerAdapter.groups
-        } else {
-            groupPagerAdapter.groups.filter { it.id == mainViewModel.subscriptionId }
+        val groups = mainViewModel.getSubscriptions(this)
+        val names = groups.map {
+            val count = MmkvManager.decodeServerList(it.id).size
+            "${it.remarks} ($count)"
         }
-
-        groupsToRefresh.forEach { group ->
-            if (group.id.isEmpty()) {
-                return@forEach
-            }
-            val tabIndex = groupPagerAdapter.groups.indexOfFirst { it.id == group.id }
-            if (tabIndex >= 0) {
-                val count = MmkvManager.decodeServerList(group.id).size
-                binding.tabGroup.getTabAt(tabIndex)?.text = "${group.remarks} ($count)"
-            }
-        }
+        subGroupAdapter.submitList(names)
     }
 
-    private fun handleFabAction() {
-        applyRunningState(isLoading = true, isRunning = false)
+    private fun setupToggleWebView() {
+        val webView = binding.fabToggle
+        webView.settings.javaScriptEnabled = true
+        webView.settings.allowFileAccess = false
+        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        webView.background = null
+        webView.isVerticalScrollBarEnabled = false
+        webView.isHorizontalScrollBarEnabled = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setDefaultFocusHighlightEnabled(false)
+        }
+        webView.addJavascriptInterface(ToggleJsInterface(), "Android")
+        webView.loadUrl("file:///android_res/raw/glass_toggle.html")
+    }
 
-        if (mainViewModel.isRunning.value == true) {
-            CoreServiceManager.stopVService(this)
-        } else if (SettingsManager.isVpnMode()) {
-            val intent = VpnService.prepare(this)
-            if (intent == null) {
-                startV2Ray()
-            } else {
-                requestVpnPermission.launch(intent)
+    /** Called from the WebView toggle via JavaScript interface. */
+    inner class ToggleJsInterface {
+        @JavascriptInterface
+        fun onToggle(checked: Boolean) {
+            runOnUiThread {
+                if (checked) {
+                    // Turn on
+                    applyRunningState(isLoading = true, isRunning = false)
+                    if (mainViewModel.isRunning.value == true) {
+                        CoreServiceManager.stopVService(this@MainActivity)
+                    } else if (SettingsManager.isVpnMode()) {
+                        val intent = VpnService.prepare(this@MainActivity)
+                        if (intent == null) startV2Ray() else requestVpnPermission.launch(intent)
+                    } else {
+                        startV2Ray()
+                    }
+                } else {
+                    // Turn off
+                    if (mainViewModel.isRunning.value == true) {
+                        CoreServiceManager.stopVService(this@MainActivity)
+                    }
+                    applyRunningState(false, false)
+                }
             }
-        } else {
-            startV2Ray()
         }
     }
 
@@ -253,6 +348,51 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         CoreServiceManager.startVService(this)
     }
 
+    private fun autoConnectBestServer() {
+        val candidates = mainViewModel.serversCache.toList()
+        if (candidates.isEmpty()) {
+            toast(R.string.auto_connect_unavailable)
+            return
+        }
+        binding.btnAutoConnect.isEnabled = false
+        toast(R.string.auto_connect_testing)
+        lifecycleScope.launch {
+            val measured = withContext(Dispatchers.IO) {
+                coroutineScope {
+                    candidates.map { item ->
+                        async {
+                            val ping = com.v2ray.ang.util.DirectPingManager.measure(
+                                applicationContext,
+                                item.profile.server,
+                                item.profile.serverPort
+                            )
+                            if (ping > 0L) item.guid to ping else null
+                        }
+                    }.awaitAll().filterNotNull().minByOrNull { it.second }
+                }
+            }
+            binding.btnAutoConnect.isEnabled = true
+            if (measured == null) {
+                toast(R.string.auto_connect_unavailable)
+                return@launch
+            }
+
+            MmkvManager.setSelectServer(measured.first)
+            mainViewModel.updateListAction.value = -1
+            toast(getString(R.string.auto_connect_selected, measured.second))
+            updateMapDestination(mainViewModel.isRunning.value == true)
+
+            if (mainViewModel.isRunning.value == true) {
+                restartV2Ray()
+            } else if (SettingsManager.isVpnMode()) {
+                val intent = VpnService.prepare(this@MainActivity)
+                if (intent == null) startV2Ray() else requestVpnPermission.launch(intent)
+            } else {
+                startV2Ray()
+            }
+        }
+    }
+
     fun restartV2Ray() {
         if (mainViewModel.isRunning.value == true) {
             CoreServiceManager.stopVService(this)
@@ -268,21 +408,15 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     private fun applyRunningState(isLoading: Boolean, isRunning: Boolean) {
-        if (isLoading) {
-            binding.fab.setImageResource(R.drawable.ic_fab_check)
-            return
-        }
+        if (isLoading) return
+
+        // Sync WebView toggle state
+        binding.fabToggle.evaluateJavascript("javascript:setState($isRunning)", null)
 
         if (isRunning) {
-            binding.fab.setImageResource(R.drawable.ic_stop_24dp)
-            binding.fab.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_active))
-            binding.fab.contentDescription = getString(R.string.action_stop_service)
             setTestState(getString(R.string.connection_connected))
             binding.layoutTest.isFocusable = true
         } else {
-            binding.fab.setImageResource(R.drawable.ic_play_24dp)
-            binding.fab.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_inactive))
-            binding.fab.contentDescription = getString(R.string.tasker_start_service)
             setTestState(getString(R.string.connection_not_connected))
             binding.layoutTest.isFocusable = false
         }
@@ -298,7 +432,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             // This deliberately does not use a name/TLD fallback, avoiding a misleading
             // intermediate country while the real IP lookup is in progress.
             geoLocationJob = lifecycleScope.launch(Dispatchers.IO) {
-                val result = IpGeoLocationResolver.serverLocation(profile?.server)
+                val result = IpGeoLocationResolver.serverLocation(applicationContext, profile?.server)
                 if (result != null) withContext(Dispatchers.Main) {
                     binding.cinematicMap.focusLocation(result.latitude, result.longitude, result.country, result.countryCode, true)
                 }
@@ -310,7 +444,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             // When disconnected, always use the user's ordinary public IP. Selecting a
             // config must not move the marker until the tunnel is actually turned on.
             geoLocationJob = lifecycleScope.launch(Dispatchers.IO) {
-                val result = IpGeoLocationResolver.currentPublicLocation()
+                val result = IpGeoLocationResolver.currentPublicLocation(applicationContext)
                 if (result != null) withContext(Dispatchers.Main) {
                     binding.cinematicMap.focusLocation(result.latitude, result.longitude, result.country, result.countryCode, false)
                 }
@@ -325,6 +459,10 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     override fun onResume() {
         super.onResume()
+        // Android may replace the underlying Wi-Fi/mobile Network while the
+        // screen is off. Refresh both direct-ping routing and service state.
+        com.v2ray.ang.util.DirectPingManager.refresh(applicationContext)
+        mainViewModel.refreshServiceState()
         autoUpdateSubscriptions()
         startTrafficPolling()
     }
@@ -362,14 +500,35 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                 withContext(Dispatchers.Main) {
                     if (total > 0) {
                         val remaining = total - used
-                        val percent = ((used.toFloat() / total) * 100).toInt().coerceIn(0, 100)
+                        val usedPercent = ((used.toFloat() / total) * 100).toInt().coerceIn(0, 100)
+                        val remainPercent = 100 - usedPercent
                         binding.layoutTraffic.visibility = android.view.View.VISIBLE
                         binding.tvTrafficLabel.text = if (label.isNotEmpty()) label else "Traffic"
-                        binding.tvTrafficPercent.text = "$percent%"
-                        binding.trafficProgress.progress = percent
-                        binding.tvTrafficUsed.text = "Used: ${used.toTrafficString()}"
-                        binding.tvTrafficRemaining.text = "Rem: ${remaining.toTrafficString()}"
-                        binding.tvTrafficTotal.text = "Total: ${total.toTrafficString()}"
+                        binding.tvTrafficPercent.text = "$remainPercent% Left"
+
+                        // Traffic color: green → red based on remaining
+                        val hue = (remainPercent / 100f) * 120f
+                        val progressColor = android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.85f, 0.50f))
+                        val progressColorLight = android.graphics.Color.HSVToColor(floatArrayOf(hue.coerceAtLeast(0f), 0.90f, 0.62f))
+
+                        val progressFill = binding.trafficProgressFill
+                        val layoutParams = progressFill.layoutParams
+                        val parentWidth = (progressFill.parent as android.view.View).width
+                        layoutParams.width = (parentWidth * usedPercent / 100f).toInt().coerceAtLeast(0)
+                        progressFill.layoutParams = layoutParams
+
+                        val gradient = android.graphics.drawable.GradientDrawable(
+                            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                            intArrayOf(progressColor, progressColorLight)
+                        )
+                        gradient.cornerRadius = 0f
+                        progressFill.background = gradient
+
+                        binding.tvTrafficPercent.setTextColor(android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.85f, 0.60f)))
+
+                        binding.tvTrafficUsed.text = "${used.toTrafficString()} Used"
+                        binding.tvTrafficRemaining.text = "${remaining.toTrafficString()} Rem"
+                        binding.tvTrafficTotal.text = "${total.toTrafficString()} Total"
 
                         if (expire > 0) {
                             val expireMs = if (expire > 1000000000000L) expire else expire * 1000L
@@ -382,10 +541,11 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                     } else {
                         binding.tvTrafficLabel.text = if (label.isNotEmpty()) label else "Traffic"
                         binding.tvTrafficPercent.text = "-"
-                        binding.trafficProgress.progress = 0
-                        binding.tvTrafficUsed.text = "Used: 0 B"
+                        binding.trafficProgressFill.layoutParams.width = 0
+                        binding.trafficProgressFill.requestLayout()
+                        binding.tvTrafficUsed.text = "0 B Used"
                         binding.tvTrafficRemaining.text = "Unlimited"
-                        binding.tvTrafficTotal.text = "Total: -"
+                        binding.tvTrafficTotal.text = "- Total"
                         binding.tvTrafficExpiry.visibility = android.view.View.GONE
                     }
                 }
@@ -407,26 +567,43 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
+        return false
+    }
 
-        val searchItem = menu.findItem(R.id.search_view)
-        if (searchItem != null) {
-            val searchView = searchItem.actionView as SearchView
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean = false
+    private fun showMainGlassMenu(anchor: View) {
+        val items = listOf(
+            GlassMenuItem(R.drawable.ic_add_24dp, getString(R.string.menu_item_add_config)) { showImportMenu(anchor) },
+            GlassMenuItem(label = getString(R.string.title_service_restart)) { restartV2Ray() },
+            GlassMenuItem(label = getString(R.string.title_del_all_config)) { delAllConfig() },
+            GlassMenuItem(label = getString(R.string.title_del_duplicate_config)) { delDuplicateConfig() },
+            GlassMenuItem(label = getString(R.string.title_del_invalid_config)) { delInvalidConfig() },
+            GlassMenuItem(label = getString(R.string.title_export_all)) { exportAll() },
+            GlassMenuItem(label = getString(R.string.title_ping_all_server)) {
+                toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
+                mainViewModel.testAllRealPing()
+            },
+            GlassMenuItem(label = getString(R.string.title_sort_by_test_results)) { sortByTestResults() },
+            GlassMenuItem(label = getString(R.string.title_locate_selected_config)) { updateMapDestination() },
+            GlassMenuItem(label = getString(R.string.title_sub_update)) { importConfigViaSub() },
+        )
+        GlassMenuHelper.show(anchor, items)
+    }
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    mainViewModel.filterConfig(newText.orEmpty())
-                    return false
-                }
-            })
-
-            searchView.setOnCloseListener {
-                mainViewModel.filterConfig("")
-                false
-            }
-        }
-        return super.onCreateOptionsMenu(menu)
+    private fun showImportMenu(anchor: View) {
+        val items = listOf(
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_qrcode)) { importQRcode() },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_clipboard)) { importClipboard() },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_local)) { importConfigLocal() },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_vmess)) { importManually(EConfigType.VMESS.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_vless)) { importManually(EConfigType.VLESS.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_ss)) { importManually(EConfigType.SHADOWSOCKS.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_socks)) { importManually(EConfigType.SOCKS.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_http)) { importManually(EConfigType.HTTP.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_trojan)) { importManually(EConfigType.TROJAN.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_wireguard)) { importManually(EConfigType.WIREGUARD.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_hysteria2)) { importManually(EConfigType.HYSTERIA2.value) },
+        )
+        GlassMenuHelper.show(anchor, items)
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -828,6 +1005,14 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
     }
 
+    /** A tap while the list is faded restores it before anything else reacts. */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.action == MotionEvent.ACTION_DOWN && configListAutoHider.onUserInteraction()) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
             moveTaskToBack(false)
@@ -845,6 +1030,19 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             R.id.routing_setting -> requestActivityLauncher.launch(Intent(this, RoutingSettingActivity::class.java))
             R.id.user_asset_setting -> requestActivityLauncher.launch(Intent(this, UserAssetActivity::class.java))
             R.id.settings -> requestActivityLauncher.launch(Intent(this, SettingsActivity::class.java))
+            R.id.weather_toggle -> {
+                item.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)?.let {
+                    it.isChecked = !it.isChecked
+                }
+                return true
+            }
+            R.id.market_toggle -> {
+                item.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)?.let {
+                    it.isChecked = !it.isChecked
+                }
+                return true
+            }
+            R.id.market_items -> binding.drawerLayout.postDelayed({ showMarketItemsDialog() }, 220)
             R.id.promotion -> Utils.openUri(this, "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}")
             R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))
             R.id.check_for_update -> startActivity(Intent(this, CheckUpdateActivity::class.java))
@@ -857,8 +1055,53 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         return true
     }
 
+    private fun setupWidgetToggles() {
+        val menu = binding.navView.menu
+        val weatherItem = menu.findItem(R.id.weather_toggle)
+        val marketItem = menu.findItem(R.id.market_toggle)
+        val weatherSwitch = weatherItem.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)
+        val marketSwitch = marketItem.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)
+
+        val weatherEnabled = MmkvManager.decodeSettingsBool("weather_scene_enabled", true)
+        val marketEnabled = marketController?.isEnabled() == true
+        weatherSwitch?.setCheckedImmediately(weatherEnabled)
+        marketSwitch?.setCheckedImmediately(marketEnabled)
+        menu.findItem(R.id.market_items).isVisible = marketEnabled
+
+        weatherSwitch?.setOnCheckedChangeListener { enabled ->
+            MmkvManager.encodeSettings("weather_scene_enabled", enabled)
+            weatherAlternator?.setEnabled(enabled)
+        }
+        marketSwitch?.setOnCheckedChangeListener { enabled ->
+            marketController?.setEnabled(enabled)
+            menu.findItem(R.id.market_items).isVisible = enabled
+        }
+    }
+
+    private fun showMarketItemsDialog() {
+        val assets = MarketRatesController.ASSETS
+        val selected = marketController?.selected()?.toMutableSet() ?: mutableSetOf("usd", "eur")
+        val labels = mapOf(
+            "usd" to R.string.asset_usd, "eur" to R.string.asset_eur,
+            "gold" to R.string.asset_gold, "gbp" to R.string.asset_gbp,
+            "try" to R.string.asset_try, "iqd" to R.string.asset_iqd
+        )
+        val items = assets.map { asset ->
+            GlassMenuItem(
+                label = getString(labels.getValue(asset.id)),
+                checkable = true,
+                selected = asset.id in selected,
+                dismissOnClick = false
+            ) {
+                if (asset.id in selected) selected -= asset.id else selected += asset.id
+                if (selected.isEmpty()) selected += "usd"
+                marketController?.setSelected(selected)
+            }
+        } + GlassMenuItem(label = getString(R.string.market_done)) {}
+        GlassMenuHelper.show(binding.root, items, (270 * resources.displayMetrics.density).toInt())
+    }
+
     override fun onDestroy() {
-        tabMediator?.detach()
         super.onDestroy()
     }
 }

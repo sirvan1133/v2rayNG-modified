@@ -1,57 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPing">#009966</color>
-    <color name="colorPingRed">#FF0099</color>
-    <color name="colorConfigType">#f97910</color>
+    <!-- ── Telegram functional colors ── -->
+    <color name="colorPing">#00C853</color>
+    <color name="colorPingRed">#FF1744</color>
+    <color name="colorConfigType">#2AABEE</color>
     <color name="colorWhite">#FFFFFF</color>
-    <color name="color_fab_active">#f97910</color>
-    <color name="color_fab_inactive">#9C9C9C</color>
-    <color name="divider_color_light">#E0E0E0</color>
-    <color name="colorIndicator">@color/md_theme_primary</color>
+    <color name="color_fab_active">#2AABEE</color>
+    <color name="color_fab_inactive">#C4C9CC</color>
+    <color name="divider_color_light">#E5E5E5</color>
+    <color name="colorIndicator">@color/tg_primary</color>
 
-    <!-- Primary colors - main tone: black -->
-    <color name="md_theme_primary">#000000</color>
-    <color name="md_theme_onPrimary">#FFFFFF</color>
-    <color name="md_theme_primaryContainer">#E0E0E0</color>
-    <color name="md_theme_onPrimaryContainer">#000000</color>
+    <!-- ── Telegram palette (Light) ── -->
 
-    <!-- Secondary colors - accent color: orange -->
-    <color name="md_theme_secondary">#f97910</color>
-    <color name="md_theme_onSecondary">#FFFFFF</color>
-    <color name="md_theme_secondaryContainer">#FFE8D6</color>
-    <color name="md_theme_onSecondaryContainer">#2B1700</color>
+    <!-- Telegram Blue -->
+    <color name="tg_primary">#2AABEE</color>
+    <color name="tg_onPrimary">#FFFFFF</color>
+    <color name="tg_primaryContainer">#DAF0FD</color>
+    <color name="tg_onPrimaryContainer">#002B3B</color>
 
-    <!-- Tertiary colors - accent color: green -->
-    <color name="md_theme_tertiary">#009966</color>
-    <color name="md_theme_onTertiary">#FFFFFF</color>
-    <color name="md_theme_tertiaryContainer">#A0F2D0</color>
-    <color name="md_theme_onTertiaryContainer">#00201A</color>
+    <!-- Accent — Telegram uses same blue for secondary -->
+    <color name="tg_secondary">#2AABEE</color>
+    <color name="tg_onSecondary">#FFFFFF</color>
+    <color name="tg_secondaryContainer">#DAF0FD</color>
+    <color name="tg_onSecondaryContainer">#002B3B</color>
 
-    <!-- Error colors -->
-    <color name="md_theme_error">#BA1A1A</color>
-    <color name="md_theme_errorContainer">#FFDAD6</color>
-    <color name="md_theme_onError">#FFFFFF</color>
-    <color name="md_theme_onErrorContainer">#410002</color>
+    <!-- Green (ping / positive actions) -->
+    <color name="tg_tertiary">#00C853</color>
+    <color name="tg_onTertiary">#FFFFFF</color>
+    <color name="tg_tertiaryContainer">#B9F6CA</color>
+    <color name="tg_onTertiaryContainer">#002109</color>
 
-    <!-- Background colors -->
-    <color name="md_theme_background">#FFFFFF</color>
-    <color name="md_theme_onBackground">#1C1B1F</color>
+    <!-- Error — Telegram red -->
+    <color name="tg_error">#E53935</color>
+    <color name="tg_errorContainer">#FFDAD6</color>
+    <color name="tg_onError">#FFFFFF</color>
+    <color name="tg_onErrorContainer">#410002</color>
 
-    <!-- Surface colors -->
-    <color name="md_theme_surface">#FFFFFF</color>
-    <color name="md_theme_onSurface">#1C1B1F</color>
-    <color name="md_theme_surfaceVariant">#E7E0EC</color>
-    <color name="md_theme_onSurfaceVariant">#49454F</color>
-    <color name="md_theme_inverseSurface">#313033</color>
-    <color name="md_theme_inverseOnSurface">#F4EFF4</color>
+    <!-- Background — Telegram light bg -->
+    <color name="tg_background">#FFFFFF</color>
+    <color name="tg_onBackground">#212121</color>
 
-    <!-- Outline colors -->
-    <color name="md_theme_outline">#79747E</color>
-    <color name="md_theme_outlineVariant">#CAC4D0</color>
+    <!-- Surface (cards / top bars) — slightly darker than bg in Telegram -->
+    <color name="tg_surface">#FFFFFF</color>
+    <color name="tg_onSurface">#212121</color>
+    <color name="tg_surfaceVariant">#F3F3F5</color>
+    <color name="tg_onSurfaceVariant">#707579</color>
+    <color name="tg_inverseSurface">#182533</color>
+    <color name="tg_inverseOnSurface">#F4F5F5</color>
 
-    <!-- Other colors -->
-    <color name="md_theme_inversePrimary">#C0C0C0</color>
-    <color name="md_theme_shadow">#000000</color>
-    <color name="md_theme_surfaceTint">#000000</color>
-    <color name="md_theme_scrim">#000000</color>
+    <!-- Outline / subtle divider -->
+    <color name="tg_outline">#D3D5D7</color>
+    <color name="tg_outlineVariant">#E5E5E5</color>
+
+    <!-- Other -->
+    <color name="tg_inversePrimary">#5EB5F7</color>
+    <color name="tg_shadow">#1A000000</color>
+    <color name="tg_surfaceTint">#2AABEE</color>
+    <color name="tg_scrim">#66000000</color>
+
+    <!-- ── Map to Material 3 names (used by themes.xml) ── -->
+    <color name="md_theme_primary">@color/tg_primary</color>
+    <color name="md_theme_onPrimary">@color/tg_onPrimary</color>
+    <color name="md_theme_primaryContainer">@color/tg_primaryContainer</color>
+    <color name="md_theme_onPrimaryContainer">@color/tg_onPrimaryContainer</color>
+
+    <color name="md_theme_secondary">@color/tg_secondary</color>
+    <color name="md_theme_onSecondary">@color/tg_onSecondary</color>
+    <color name="md_theme_secondaryContainer">@color/tg_secondaryContainer</color>
+    <color name="md_theme_onSecondaryContainer">@color/tg_onSecondaryContainer</color>
+
+    <color name="md_theme_tertiary">@color/tg_tertiary</color>
+    <color name="md_theme_onTertiary">@color/tg_onTertiary</color>
+    <color name="md_theme_tertiaryContainer">@color/tg_tertiaryContainer</color>
+    <color name="md_theme_onTertiaryContainer">@color/tg_onTertiaryContainer</color>
+
+    <color name="md_theme_error">@color/tg_error</color>
+    <color name="md_theme_errorContainer">@color/tg_errorContainer</color>
+    <color name="md_theme_onError">@color/tg_onError</color>
+    <color name="md_theme_onErrorContainer">@color/tg_onErrorContainer</color>
+
+    <color name="md_theme_background">@color/tg_background</color>
+    <color name="md_theme_onBackground">@color/tg_onBackground</color>
+
+    <color name="md_theme_surface">@color/tg_surface</color>
+    <color name="md_theme_onSurface">@color/tg_onSurface</color>
+    <color name="md_theme_surfaceVariant">@color/tg_surfaceVariant</color>
+    <color name="md_theme_onSurfaceVariant">@color/tg_onSurfaceVariant</color>
+    <color name="md_theme_inverseSurface">@color/tg_inverseSurface</color>
+    <color name="md_theme_inverseOnSurface">@color/tg_inverseOnSurface</color>
+
+    <color name="md_theme_outline">@color/tg_outline</color>
+    <color name="md_theme_outlineVariant">@color/tg_outlineVariant</color>
+
+    <color name="md_theme_inversePrimary">@color/tg_inversePrimary</color>
+    <color name="md_theme_shadow">@color/tg_shadow</color>
+    <color name="md_theme_surfaceTint">@color/tg_surfaceTint</color>
+    <color name="md_theme_scrim">@color/tg_scrim</color>
 </resources>

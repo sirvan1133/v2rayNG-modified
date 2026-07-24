@@ -60,6 +60,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         MessageUtil.sendMsg2Service(getApplication(), AppConfig.MSG_REGISTER_CLIENT, "")
     }
 
+    /** Re-syncs UI state with the service after screen-off/background resume. */
+    fun refreshServiceState() {
+        MessageUtil.sendMsg2Service(getApplication(), AppConfig.MSG_REGISTER_CLIENT, "")
+    }
+
     /**
      * Called when the ViewModel is cleared.
      */

@@ -43,4 +43,18 @@ class PermissionHelper(private val activity: AppCompatActivity) {
             permissionLauncher.launch(permission)
         }
     }
+
+    /**
+     * Like [request] but also reports denial, for features that degrade
+     * gracefully instead of just informing the user.
+     */
+    fun requestWithResult(permissionType: PermissionType, onResult: (Boolean) -> Unit) {
+        val permission = permissionType.getPermission()
+        if (ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED) {
+            onResult(true)
+        } else {
+            permissionCallback = onResult
+            permissionLauncher.launch(permission)
+        }
+    }
 }

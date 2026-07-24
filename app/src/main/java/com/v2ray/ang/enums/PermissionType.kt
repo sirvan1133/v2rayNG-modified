@@ -17,6 +17,11 @@ enum class PermissionType {
     POST_NOTIFICATIONS {
         @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun getPermission(): String = Manifest.permission.POST_NOTIFICATIONS
+    },
+
+    /** Coarse location permission (used for the weather scene) */
+    LOCATION {
+        override fun getPermission(): String = Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
     /** Return the actual Android permission string */
@@ -27,6 +32,7 @@ enum class PermissionType {
         return when (this) {
             CAMERA -> "Camera"
             POST_NOTIFICATIONS -> "Notification"
+            LOCATION -> "Location"
         }
     }
 }

@@ -4,6 +4,8 @@
     <string name="app_widget_name">Switch</string>
     <string name="app_tile_name">Switch</string>
     <string name="app_tile_first_use">First use of this feature, please use the app to add server</string>
+    <string name="app_footer">v2rayNG Modified</string>
+    <string name="tagline_vpn_client">Secure VPN Client</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="migration_success">Data migration success!</string>
@@ -480,4 +482,50 @@
         <item>WebDAV</item>
     </string-array>
 
+    <!-- Weather scene -->
+    <string name="weather_current_location">Current location</string>
+    <string name="weather_waiting_for_location">Locating…</string>
+    <string name="weather_loading">Loading weather…</string>
+    <string name="weather_no_permission">Location permission needed for weather</string>
+    <string name="weather_feels_like">Feels like %1$d°</string>
+    <string name="weather_feels_like_label">Feels like</string>
+    <string name="weather_humidity">Humidity</string>
+    <string name="weather_wind">Wind</string>
+    <string name="weather_wind_value">%1$d km/h</string>
+    <string name="weather_offline_cached">Offline · %1$s</string>
+    <string name="weather_clear_day">Sunny</string>
+    <string name="weather_clear_night">Clear night</string>
+    <string name="weather_partly_cloudy">Partly cloudy</string>
+    <string name="weather_cloudy">Cloudy</string>
+    <string name="weather_fog">Foggy</string>
+    <string name="weather_drizzle">Drizzle</string>
+    <string name="weather_rain">Rain</string>
+    <string name="weather_snow">Snow</string>
+    <string name="weather_thunder">Thunderstorm</string>
+
+    <string name="widget_weather_toggle">Show weather</string>
+    <string name="widget_market_toggle">Show market prices</string>
+    <string name="widget_market_items">Choose market items</string>
+    <string name="widget_map_style">Map and marker style</string>
+    <string name="market_today">Today’s market</string>
+    <string name="market_toman">%1$s toman</string>
+    <string name="market_cached">Showing last saved prices</string>
+    <string name="market_source">TGJU</string>
+    <string name="market_done">Done</string>
+    <string name="map_style_atlas">Classic atlas</string>
+    <string name="map_style_wire">Digital wireframe</string>
+    <string name="map_style_dots">Dotted terrain</string>
+    <string name="map_style_topo">Topographic</string>
+    <string name="map_style_minimal">Focused globe</string>
+    <string name="asset_usd">US dollar</string>
+    <string name="asset_eur">Euro</string>
+    <string name="asset_gold">18K gold</string>
+    <string name="asset_gbp">British pound</string>
+    <string name="asset_try">Turkish lira</string>
+    <string name="asset_iqd">Iraqi dinar</string>
+    <string name="widget_toggle_description">Enable or disable widget</string>
+    <string name="auto_connect">Auto Connect</string>
+    <string name="auto_connect_testing">Finding the fastest configuration…</string>
+    <string name="auto_connect_selected">Connecting to the best configuration (%1$d ms)</string>
+    <string name="auto_connect_unavailable">No reachable configuration was found</string>
 </resources>

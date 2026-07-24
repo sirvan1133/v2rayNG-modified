@@ -46,6 +46,20 @@ abstract class HelperBaseActivity : BaseActivity() {
     }
 
     /**
+     * Check and request permission, reporting both grant and denial.
+     * Use for features that degrade gracefully when denied.
+     *
+     * @param permissionType The type of permission to check and request
+     * @param onResult Callback with the final grant state
+     */
+    protected fun checkAndRequestPermissionWithResult(
+        permissionType: PermissionType,
+        onResult: (Boolean) -> Unit
+    ) {
+        permissionRequester.requestWithResult(permissionType, onResult)
+    }
+
+    /**
      * Launch file chooser with ACTION_GET_CONTENT intent.
      * Convenience method that delegates to fileChooser helper.
      *

@@ -5,174 +5,227 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
-        android:orientation="vertical">
+        android:fitsSystemWindows="true">
+
+        <com.v2ray.ang.ui.CinematicWorldMapView
+            android:id="@+id/cinematic_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:alpha="0.92" />
+
+        <com.v2ray.ang.weather.CinematicWeatherView
+            android:id="@+id/cinematic_weather"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:importantForAccessibility="no"
+            android:alpha="0" />
+
+        <com.v2ray.ang.market.MarketRatesView
+            android:id="@+id/market_rates"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:importantForAccessibility="no" />
 
         <LinearLayout
-            android:id="@+id/layout_traffic"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:background="@color/md_theme_background">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/layout_traffic"
+                android:layoutDirection="ltr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tv_traffic_label"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Traffic"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/md_theme_onSurface" />
-
-                <TextView
-                    android:id="@+id/tv_traffic_percent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0%"
-                    android:textSize="11sp"
-                    android:textColor="@color/md_theme_onSurface" />
-            </LinearLayout>
-
-            <ProgressBar
-                android:id="@+id/traffic_progress"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="6dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="0"
-                android:progressTint="@color/color_fab_active" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tv_traffic_used"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="0 B"
-                    android:textSize="10sp"
-                    android:textColor="@color/md_theme_onSurface" />
-
-                <TextView
-                    android:id="@+id/tv_traffic_remaining"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="0 B"
-                    android:textSize="10sp"
-                    android:textColor="@color/md_theme_onSurface" />
-
-                <TextView
-                    android:id="@+id/tv_traffic_total"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:text="0 B"
-                    android:textSize="10sp"
-                    android:textColor="@color/md_theme_onSurface" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tv_traffic_expiry"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text=""
-                android:textSize="10sp"
-                android:textColor="@color/md_theme_onSecondaryContainer"
-                android:visibility="gone" />
-        </LinearLayout>
-
-        <com.google.android.material.appbar.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize">
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="end"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_traffic_label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Traffic"
+                        android:textSize="12sp"
+                        android:textColor="#8CFFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tv_traffic_percent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#EBFFFFFF" />
+                </LinearLayout>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/tg_traffic_track">
+
+                    <View
+                        android:id="@+id/traffic_progress_fill"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/tg_primary" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/btn_update_sub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:text="@string/title_update_subscription"
-                        android:textSize="12sp"
-                        android:clickable="true"
-                        android:focusable="true" />
+                        android:id="@+id/tv_traffic_used"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="0 B"
+                        android:textSize="11sp"
+                        android:textColor="#73FFFFFF" />
 
                     <TextView
-                        android:id="@+id/btn_ping_all"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
+                        android:id="@+id/tv_traffic_remaining"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:gravity="center"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:text="@string/title_ping_all"
-                        android:textSize="12sp"
-                        android:clickable="true"
-                        android:focusable="true" />
+                        android:text="0 B"
+                        android:textSize="11sp"
+                        android:textColor="#73FFFFFF" />
 
                     <TextView
-                        android:id="@+id/btn_add_clipboard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:text="@string/title_add_from_clipboard"
-                        android:textSize="12sp"
-                        android:clickable="true"
-                        android:focusable="true" />
+                        android:id="@+id/tv_traffic_total"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="0 B"
+                        android:textSize="11sp"
+                        android:textColor="#73FFFFFF" />
                 </LinearLayout>
-            </androidx.appcompat.widget.Toolbar>
 
-        </com.google.android.material.appbar.AppBarLayout>
+                <TextView
+                    android:id="@+id/tv_traffic_expiry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text=""
+                    android:textSize="10sp"
+                    android:textColor="@color/md_theme_onSecondaryContainer"
+                    android:visibility="gone" />
+            </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.v2ray.ang.ui.CinematicWorldMapView
-                android:id="@+id/cinematic_map"
+            <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:importantForAccessibility="no"
-                android:alpha="0.92" />
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:elevation="0dp"
+                app:liftOnScroll="false">
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="@android:color/transparent"
+                    android:elevation="0dp"
+                    app:titleTextColor="@color/tg_onSurface"
+                    app:contentInsetStart="0dp"
+                    app:contentInsetLeft="0dp"
+                    app:contentInsetRight="0dp"
+                    app:contentInsetEnd="0dp">
+
+<LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginStart="18dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_top_actions_solid"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="5dp">
+
+                        <TextView
+                            android:id="@+id/btn_update_sub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:text="@string/title_update_subscription"
+                            android:textSize="11sp"
+                            android:textColor="@color/tg_primary"
+                            android:fontFamily="sans-serif-medium"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <TextView
+                            android:id="@+id/btn_auto_connect"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingHorizontal="9dp"
+                            android:text="@string/auto_connect"
+                            android:textSize="10sp"
+                            android:textColor="@color/tg_primary"
+                            android:fontFamily="sans-serif-medium"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <TextView
+                            android:id="@+id/btn_add_clipboard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingHorizontal="9dp"
+                            android:text="@string/title_add_from_clipboard"
+                            android:textSize="11sp"
+                            android:textColor="@color/tg_primary"
+                            android:fontFamily="sans-serif-medium"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <TextView
+                            android:id="@+id/btn_more"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:text="⋮"
+                            android:textSize="22sp"
+                            android:textColor="#8CFFFFFF"
+                            android:clickable="true"
+                            android:focusable="true" />
+                    </LinearLayout>
+                </androidx.appcompat.widget.Toolbar>
+
+            </com.google.android.material.appbar.AppBarLayout>
 
             <androidx.coordinatorlayout.widget.CoordinatorLayout
                 android:id="@+id/main_content"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:background="@android:color/transparent">
 
                 <LinearLayout
@@ -186,22 +239,27 @@
                         android:layout_height="wrap_content"
                         android:indeterminate="true"
                         android:visibility="invisible"
-                        app:indicatorColor="@color/color_fab_active" />
+                        app:indicatorColor="@color/tg_primary"
+                        app:trackColor="@color/tg_outlineVariant" />
 
-                    <com.google.android.material.tabs.TabLayout
-                        android:id="@+id/tab_group"
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_sub_groups"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:tabIndicatorFullWidth="false"
-                        app:tabMode="scrollable"
-                        app:tabTextAppearance="@style/TabLayoutTextStyle" />
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_marginTop="4dp"
+                        android:clipToPadding="false"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
+                        android:paddingVertical="4dp" />
 
                     <androidx.viewpager2.widget.ViewPager2
                         android:id="@+id/view_pager"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:background="@android:color/transparent"
-                        android:nextFocusRight="@+id/fab"
+                        android:nextFocusRight="@+id/fab_toggle"
                         android:scrollbars="vertical"
                         android:layout_weight="1" />
 
@@ -213,7 +271,7 @@
                         android:contentDescription="@string/connection_test_pending"
                         android:focusable="true"
                         android:nextFocusLeft="@+id/view_pager"
-                        android:nextFocusRight="@+id/fab"
+                        android:nextFocusRight="@+id/fab_toggle"
                         android:orientation="vertical">
 
                         <View
@@ -234,54 +292,46 @@
 
                     </LinearLayout>
 
-
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:paddingBottom="4dp"
-                        android:text="ویرایش شده توسط s.ahmadi"
-                        android:textSize="11sp"
-                        android:textColor="@android:color/darker_gray" />
-
                 </LinearLayout>
 
                 <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="-16dp"
-                    android:layout_marginEnd="@dimen/padding_spacing_dp16">
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginBottom="12dp">
 
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/fab"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end"
-                        android:layout_marginBottom="@dimen/view_height_dp36"
+                    <WebView
+                        android:id="@+id/fab_toggle"
+                        android:layout_width="63dp"
+                        android:layout_height="63dp"
+                        android:background="@null"
                         android:clickable="true"
-                        android:contentDescription="@string/tasker_start_service"
-                        android:focusable="true"
-                        android:nextFocusLeft="@+id/layout_test"
-                        android:src="@drawable/ic_play_24dp"
-                        app:tint="@color/colorWhite"
-                        app:useCompatPadding="true"
-                        app:layout_anchorGravity="bottom|right|end" />
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:contentDescription="@string/tasker_start_service" />
 
                 </FrameLayout>
             </androidx.coordinatorlayout.widget.CoordinatorLayout>
-        </RelativeLayout>
-    </LinearLayout>
+
+        </LinearLayout>
+    </FrameLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="@color/tg_background"
         app:headerLayout="@layout/nav_header"
-        app:menu="@menu/menu_drawer">
-
-    </com.google.android.material.navigation.NavigationView>
+        app:menu="@menu/menu_drawer"
+        app:itemTextColor="@color/telegram_drawer_item_color"
+        app:itemIconTint="@color/telegram_drawer_item_color"
+        app:itemShapeAppearance="@style/TgDrawerItemShape"
+        app:itemShapeAppearanceOverlay="@style/TgDrawerItemShape"
+        app:itemShapeFillColor="@android:color/transparent"
+        app:itemTextAppearance="@style/TgDrawerItemText"
+        app:itemPaddingBottom="2dp"
+        app:itemPaddingTop="2dp" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
