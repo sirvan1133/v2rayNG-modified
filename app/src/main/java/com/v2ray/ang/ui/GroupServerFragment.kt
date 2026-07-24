@@ -65,7 +65,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        adapter = MainRecyclerAdapter(mainViewModel, ActivityAdapterListener())
+        adapter = MainRecyclerAdapter(mainViewModel, ActivityAdapterListener(), viewLifecycleOwner)
         binding.recyclerView.setHasFixedSize(true)
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)) {
             binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)

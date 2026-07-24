@@ -77,6 +77,7 @@ class CinematicWorldMapView @JvmOverloads constructor(
     private var hasEndpoint = false
     private var lastFrameNanos = 0L
     private var pulsePhase = 0f
+    private var windowActive = false
     // Geometry is parsed in init(), before Android has measured this View.  It must
     // therefore use a stable world-space scale rather than width/height (which are 0
     // at that time).  A 4096px Mercator world also keeps the camera genuinely zoomed.
@@ -135,7 +136,7 @@ class CinematicWorldMapView @JvmOverloads constructor(
             .coerceIn(3_000L, 5_400L) * 1_000_000
         isAnimating = true
         markerState = MarkerState.MOVING
-        Choreographer.getInstance().postFrameCallback(this)
+        if (windowActive) Choreographer.getInstance().postFrameCallback(this)
     }
 
     private fun setConnectionTarget(active: Boolean) {
@@ -145,14 +146,17 @@ class CinematicWorldMapView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        windowActive = windowVisibility == VISIBLE
         alpha = 1f
         lastFrameNanos = 0L
         invalidate()
-        Choreographer.getInstance().postFrameCallback(this)
+        if (windowActive) Choreographer.getInstance().postFrameCallback(this)
     }
 
     override fun onWindowVisibilityChanged(visibility: Int) {
         super.onWindowVisibilityChanged(visibility)
+        windowActive = visibility == VISIBLE
+        Choreographer.getInstance().removeFrameCallback(this)
         if (visibility == VISIBLE) {
             alpha = 1f
             lastFrameNanos = 0L
@@ -160,17 +164,18 @@ class CinematicWorldMapView @JvmOverloads constructor(
             // Re-record from already parsed vector Paths; no file/network reload.
             preloadVectorAtlas()
             invalidate()
-            Choreographer.getInstance().removeFrameCallback(this)
             Choreographer.getInstance().postFrameCallback(this)
         }
     }
 
     override fun onDetachedFromWindow() {
+        windowActive = false
         Choreographer.getInstance().removeFrameCallback(this)
         super.onDetachedFromWindow()
     }
 
     override fun doFrame(frameTimeNanos: Long) {
+        if (!windowActive) return
         if (lowRamMode && lastFrameNanos != 0L && frameTimeNanos - lastFrameNanos < 30_000_000L) {
             Choreographer.getInstance().postFrameCallback(this)
             return
@@ -196,7 +201,9 @@ class CinematicWorldMapView @JvmOverloads constructor(
             if (raw >= 1f) { camera = destination; markerPosition = destination; endpoint = pendingEndpoint; labelReady = true; isAnimating = false; markerState = if (connected) MarkerState.CONNECTED else MarkerState.IDLE }
         }
         invalidate()
-        if (isAttachedToWindow && (isAnimating || connected)) Choreographer.getInstance().postFrameCallback(this)
+        if (windowActive && isAttachedToWindow && (isAnimating || connected)) {
+            Choreographer.getInstance().postFrameCallback(this)
+        }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

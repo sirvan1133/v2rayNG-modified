@@ -67,6 +67,9 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     private lateinit var subGroupAdapter: SubGroupAdapter
     private var trafficJob: Job? = null
     private var geoLocationJob: Job? = null
+    private var subscriptionRefreshJob: Job? = null
+    private var startupJob: Job? = null
+    private var updateCheckJob: Job? = null
     private var preserveMapDuringServerRestart = false
     private var weatherAlternator: WeatherMapAlternator? = null
     private var marketController: MarketRatesController? = null
@@ -140,7 +143,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             setupWeatherScene()
         }
 
-        lifecycleScope.launch {
+        startupJob = lifecycleScope.launch {
             delay(3000)
             checkForUpdatesAuto()
         }
@@ -161,7 +164,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     private fun checkForUpdatesAuto() {
-        lifecycleScope.launch(Dispatchers.IO) {
+        updateCheckJob?.cancel()
+        updateCheckJob = lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val lastCheck = MmkvManager.decodeSettingsLong("last_update_check_time", 0L)
                 val now = System.currentTimeMillis()
@@ -463,13 +467,30 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         // screen is off. Refresh both direct-ping routing and service state.
         com.v2ray.ang.util.DirectPingManager.refresh(applicationContext)
         mainViewModel.refreshServiceState()
+        SubscriptionUpdater.sync()
         autoUpdateSubscriptions()
         startTrafficPolling()
+        if (startupJob?.isActive != true) {
+            startupJob = lifecycleScope.launch {
+                delay(3000)
+                checkForUpdatesAuto()
+            }
+        }
     }
 
     override fun onPause() {
         super.onPause()
         trafficJob?.cancel()
+        trafficJob = null
+        geoLocationJob?.cancel()
+        geoLocationJob = null
+        subscriptionRefreshJob?.cancel()
+        subscriptionRefreshJob = null
+        startupJob?.cancel()
+        startupJob = null
+        updateCheckJob?.cancel()
+        updateCheckJob = null
+        SubscriptionUpdater.pauseAll()
     }
 
     private fun startTrafficPolling() {
@@ -555,7 +576,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     private fun autoUpdateSubscriptions() {
-        lifecycleScope.launch(Dispatchers.IO) {
+        subscriptionRefreshJob?.cancel()
+        subscriptionRefreshJob = lifecycleScope.launch(Dispatchers.IO) {
             val result = mainViewModel.updateConfigViaSubAll()
             if (result.configCount > 0) {
                 withContext(Dispatchers.Main) {

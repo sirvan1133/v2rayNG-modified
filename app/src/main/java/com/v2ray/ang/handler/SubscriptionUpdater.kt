@@ -81,6 +81,15 @@ object SubscriptionUpdater {
             .cancelUniqueWork(taskName(subId))
     }
 
+    /**
+     * Battery mode: no subscription worker is allowed to keep running after
+     * the UI leaves the foreground. Manual/foreground refresh remains intact.
+     */
+    fun pauseAll(context: Context = AngApplication.application) {
+        RemoteWorkManager.getInstance(context)
+            .cancelAllWorkByTag(AppConfig.SUBSCRIPTION_UPDATE_TASK_NAME)
+    }
+
     // -------------------------------------------------------------------------
     // Internal scheduling logic
     // -------------------------------------------------------------------------

@@ -119,6 +119,7 @@ class CinematicWeatherView @JvmOverloads constructor(
     private var lightningTimer = 0f
     private var lightningAlpha = 0f
     private var frameScheduled = false
+    private var windowActive = false
 
     private var calendarDays: List<PersianCalendarHelper.PersianDayInfo> = emptyList()
     private var calendarEpochDay = -1L
@@ -202,11 +203,13 @@ class CinematicWeatherView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        windowActive = windowVisibility == VISIBLE
         refreshCalendarIfNeeded()
         scheduleFrame()
     }
 
     override fun onDetachedFromWindow() {
+        windowActive = false
         Choreographer.getInstance().removeFrameCallback(this)
         frameScheduled = false
         super.onDetachedFromWindow()
@@ -226,14 +229,27 @@ class CinematicWeatherView @JvmOverloads constructor(
         }
     }
 
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        windowActive = visibility == VISIBLE
+        if (!windowActive) {
+            Choreographer.getInstance().removeFrameCallback(this)
+            frameScheduled = false
+        } else {
+            lastFrameNanos = 0L
+            scheduleFrame()
+        }
+    }
+
     private fun scheduleFrame() {
-        if (frameScheduled || !isAttachedToWindow || visibility != VISIBLE) return
+        if (frameScheduled || !windowActive || !isAttachedToWindow || visibility != VISIBLE) return
         frameScheduled = true
         Choreographer.getInstance().postFrameCallback(this)
     }
 
     override fun doFrame(frameTimeNanos: Long) {
         frameScheduled = false
+        if (!windowActive) return
         val dt = if (lastFrameNanos == 0L) 0f else ((frameTimeNanos - lastFrameNanos) / 1_000_000_000f).coerceAtMost(.1f)
         lastFrameNanos = frameTimeNanos
         pulsePhase += dt
@@ -252,7 +268,7 @@ class CinematicWeatherView @JvmOverloads constructor(
             lightningAlpha = (lightningAlpha - dt * 2.4f).coerceAtLeast(0f)
         }
         invalidate()
-        if (isAttachedToWindow && visibility == VISIBLE) scheduleFrame()
+        if (windowActive && isAttachedToWindow && visibility == VISIBLE) scheduleFrame()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

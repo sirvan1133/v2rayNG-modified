@@ -7,6 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
@@ -23,10 +27,9 @@ import com.v2ray.ang.helper.ItemTouchHelperAdapter
 import com.v2ray.ang.helper.ItemTouchHelperViewHolder
 import com.v2ray.ang.util.DirectPingManager
 import com.v2ray.ang.viewmodel.MainViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -36,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class MainRecyclerAdapter(
     private val mainViewModel: MainViewModel,
-    private val adapterListener: MainAdapterListener?
+    private val adapterListener: MainAdapterListener?,
+    private val lifecycleOwner: LifecycleOwner
 ) : RecyclerView.Adapter<MainRecyclerAdapter.BaseViewHolder>(), ItemTouchHelperAdapter {
     companion object {
         private data class PingSnapshot(val value: Long, val measuredAt: Long)
@@ -197,31 +201,35 @@ class MainRecyclerAdapter(
             binding.statusDot.clearAnimation()
         }
 
-        holder.livePingJob = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
-            launch {
-                val host = profile.server.orEmpty()
-                val flag = flagCache[host] ?: withContext(Dispatchers.IO) {
-                    flagForCountryCode(
-                        IpGeoLocationResolver.serverLocation(
+        holder.livePingJob = lifecycleOwner.lifecycleScope.launch {
+            // Cancels the flag lookup and every live-ping loop while the app is
+            // backgrounded or the screen is locked. Cached values remain visible.
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                coroutineScope {
+                    launch {
+                        val host = profile.server.orEmpty()
+                        val flag = flagCache[host] ?: withContext(Dispatchers.IO) {
+                            flagForCountryCode(
+                                IpGeoLocationResolver.serverLocation(
+                                    binding.root.context.applicationContext,
+                                    host
+                                )?.countryCode
+                            )
+                        }.also { if (host.isNotBlank() && it != "🌐") flagCache[host] = it }
+                        if (isActive) binding.tvSubscription.text = flag
+                    }
+                    while (isActive) {
+                        val ping = DirectPingManager.measure(
                             binding.root.context.applicationContext,
-                            host
-                        )?.countryCode
-                    )
-                }.also { if (host.isNotBlank() && it != "🌐") flagCache[host] = it }
-                if (isActive) {
-                    binding.tvSubscription.text = flag
+                            profile.server,
+                            profile.serverPort
+                        )
+                        if (!isActive) return@coroutineScope
+                        pingCache[pingKey] = PingSnapshot(ping, System.currentTimeMillis())
+                        renderPing(binding, ping)
+                        delay(LIVE_PING_INTERVAL_MS)
+                    }
                 }
-            }
-            while (isActive) {
-                val ping = DirectPingManager.measure(
-                    binding.root.context.applicationContext,
-                    profile.server,
-                    profile.serverPort
-                )
-                if (!isActive) return@launch
-                pingCache[pingKey] = PingSnapshot(ping, System.currentTimeMillis())
-                renderPing(binding, ping)
-                delay(LIVE_PING_INTERVAL_MS)
             }
         }
     }

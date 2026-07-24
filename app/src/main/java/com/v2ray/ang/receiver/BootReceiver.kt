@@ -6,7 +6,6 @@ import android.content.Intent
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.core.CoreServiceManager
 import com.v2ray.ang.handler.MmkvManager
-import com.v2ray.ang.handler.SubscriptionUpdater
 import com.v2ray.ang.util.LogUtil
 
 class BootReceiver : BroadcastReceiver() {
@@ -38,6 +37,7 @@ class BootReceiver : BroadcastReceiver() {
 
         LogUtil.i(AppConfig.TAG, "BootReceiver: Starting V2Ray service")
         CoreServiceManager.startVService(context)
-        SubscriptionUpdater.sync(context)
+        // Foreground-only battery policy: MainActivity schedules subscription
+        // work while visible and cancels it again when the UI is backgrounded.
     }
 }
