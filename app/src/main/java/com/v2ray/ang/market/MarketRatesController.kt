@@ -40,6 +40,10 @@ class MarketRatesController(
     private var ratesCache = emptyList<MarketRate>()
 
     init {
+        if (!MmkvManager.decodeSettingsBool(KEY_DEFAULTS_272_APPLIED, false)) {
+            MmkvManager.encodeSettings(KEY_ENABLED, true)
+            MmkvManager.encodeSettings(KEY_DEFAULTS_272_APPLIED, true)
+        }
         owner.lifecycle.addObserver(this)
         view.visibility = View.INVISIBLE
         view.alpha = 0f
@@ -186,6 +190,7 @@ class MarketRatesController(
     companion object {
         const val KEY_ENABLED = "market_widget_enabled"
         const val KEY_SELECTED = "market_widget_selected"
+        private const val KEY_DEFAULTS_272_APPLIED = "market_widget_defaults_272_applied"
         private const val CURRENCY_URL = "https://www.tgju.org/currency"
         private const val GOLD_URL = "https://www.tgju.org/gold-chart"
         private const val REFRESH_INTERVAL = 300_000L
