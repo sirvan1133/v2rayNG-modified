@@ -3,11 +3,9 @@ package com.v2ray.ang.ui
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
-import com.v2ray.ang.databinding.ActivityNoneBinding
+import com.v2ray.ang.databinding.ActivityScannerBinding
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.util.LogUtil
@@ -18,7 +16,7 @@ import io.github.g00fy2.quickie.config.BarcodeFormat
 import io.github.g00fy2.quickie.config.ScannerConfig
 
 class ScannerActivity : HelperBaseActivity() {
-    private val binding by lazy { ActivityNoneBinding.inflate(layoutInflater) }
+    private val binding by lazy { ActivityScannerBinding.inflate(layoutInflater) }
 
     private val scanQrCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
 
@@ -26,6 +24,8 @@ class ScannerActivity : HelperBaseActivity() {
         super.onCreate(savedInstanceState)
 
         setContentViewWithToolbar(binding.root, showHomeAsUp = true, title = getString(R.string.menu_item_import_config_qrcode))
+        binding.actionScanCamera.setOnClickListener { launchScan() }
+        binding.actionSelectQrImage.setOnClickListener { showFileChooser() }
 
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_START_SCAN_IMMEDIATE)) {
             launchScan()
@@ -56,26 +56,6 @@ class ScannerActivity : HelperBaseActivity() {
         intent.putExtra("SCAN_RESULT", text)
         setResult(RESULT_OK, intent)
         finish()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_scanner, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.scan_code -> {
-            launchScan()
-            true
-        }
-
-        R.id.select_photo -> {
-            showFileChooser()
-            true
-        }
-
-
-        else -> super.onOptionsItemSelected(item)
     }
 
     private fun showFileChooser() {

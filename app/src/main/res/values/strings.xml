@@ -46,6 +46,12 @@
     <string name="menu_item_import_config_manually_trojan">Add [Trojan]</string>
     <string name="menu_item_import_config_manually_wireguard">Add [Wireguard]</string>
     <string name="menu_item_import_config_manually_hysteria2">Add [Hysteria2]</string>
+    <string name="scanner_choose_method">Add a QR code</string>
+    <string name="scanner_choose_method_hint">Scan with your camera or choose an image from your device.</string>
+    <string name="scanner_scan_camera">Scan with camera</string>
+    <string name="scanner_scan_camera_hint">Point the camera at a QR code.</string>
+    <string name="scanner_select_image">Choose QR image</string>
+    <string name="scanner_select_image_hint">Read a QR code from a saved screenshot or image.</string>
     <string name="del_config_comfirm">Confirm delete ?</string>
     <string name="del_invalid_config_comfirm">Please test before deleting! Confirm delete ?</string>
     <string name="server_lab_remarks">remarks</string>
