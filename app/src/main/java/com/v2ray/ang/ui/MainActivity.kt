@@ -126,6 +126,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         binding.btnUpdateSub.setOnClickListener { importConfigViaSub() }
         binding.btnAutoConnect.setOnClickListener { autoConnectBestServer() }
         binding.btnAddClipboard.setOnClickListener { importClipboard() }
+        binding.btnAddConfig.setOnClickListener { showImportMenu(it) }
         binding.btnMore.setOnClickListener { showMainGlassMenu(it) }
 
         setupGroupTab()
@@ -594,7 +595,6 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     private fun showMainGlassMenu(anchor: View) {
         val items = listOf(
-            GlassMenuItem(R.drawable.ic_add_24dp, getString(R.string.menu_item_add_config)) { showImportMenu(anchor) },
             GlassMenuItem(label = getString(R.string.title_service_restart)) { restartV2Ray() },
             GlassMenuItem(label = getString(R.string.title_del_all_config)) { delAllConfig() },
             GlassMenuItem(label = getString(R.string.title_del_duplicate_config)) { delDuplicateConfig() },
@@ -616,6 +616,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             GlassMenuItem(label = getString(R.string.menu_item_import_config_qrcode)) { importQRcode() },
             GlassMenuItem(label = getString(R.string.menu_item_import_config_clipboard)) { importClipboard() },
             GlassMenuItem(label = getString(R.string.menu_item_import_config_local)) { importConfigLocal() },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_policy_group)) { importManually(EConfigType.POLICYGROUP.value) },
+            GlassMenuItem(label = getString(R.string.menu_item_import_config_proxy_chain)) { importManually(EConfigType.PROXYCHAIN.value) },
             GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_vmess)) { importManually(EConfigType.VMESS.value) },
             GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_vless)) { importManually(EConfigType.VLESS.value) },
             GlassMenuItem(label = getString(R.string.menu_item_import_config_manually_ss)) { importManually(EConfigType.SHADOWSOCKS.value) },

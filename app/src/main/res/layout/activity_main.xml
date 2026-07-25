@@ -205,6 +205,19 @@
                             android:focusable="true" />
 
                         <TextView
+                            android:id="@+id/btn_add_config"
+                            android:layout_width="42dp"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="+"
+                            android:textSize="25sp"
+                            android:textColor="@color/tg_primary"
+                            android:fontFamily="sans-serif-medium"
+                            android:contentDescription="@string/menu_item_add_config"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <TextView
                             android:id="@+id/btn_more"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
