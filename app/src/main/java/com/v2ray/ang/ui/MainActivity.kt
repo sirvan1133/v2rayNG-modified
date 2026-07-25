@@ -2,9 +2,7 @@ package com.v2ray.ang.ui
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.net.VpnService
 import android.os.Bundle
 import android.view.KeyEvent
@@ -12,9 +10,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -121,7 +116,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         setupNavigationDrawer()
         marketController = MarketRatesController(this, binding.marketRates)
 
-        setupToggleWebView()
+        setupToggleView()
         binding.layoutTest.setOnClickListener { handleLayoutTestClick() }
         binding.btnUpdateSub.setOnClickListener { importConfigViaSub() }
         binding.btnAutoConnect.setOnClickListener { autoConnectBestServer() }
@@ -293,28 +288,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         subGroupAdapter.submitList(names)
     }
 
-    private fun setupToggleWebView() {
-        val webView = binding.fabToggle
-        webView.settings.javaScriptEnabled = true
-        webView.settings.allowFileAccess = false
-        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        webView.setBackgroundColor(Color.TRANSPARENT)
-        webView.background = null
-        webView.overScrollMode = View.OVER_SCROLL_NEVER
-        webView.isVerticalScrollBarEnabled = false
-        webView.isHorizontalScrollBarEnabled = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            webView.setDefaultFocusHighlightEnabled(false)
-        }
-        webView.addJavascriptInterface(ToggleJsInterface(), "Android")
-        webView.loadUrl("file:///android_res/raw/glass_toggle.html")
-    }
-
-    /** Called from the WebView toggle via JavaScript interface. */
-    inner class ToggleJsInterface {
-        @JavascriptInterface
-        fun onToggle(checked: Boolean) {
-            runOnUiThread {
+    private fun setupToggleView() {
+        binding.fabToggle.setOnCheckedChangeListener { checked ->
                 if (checked) {
                     // Turn on
                     applyRunningState(isLoading = true, isRunning = false)
@@ -333,7 +308,6 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                     }
                     applyRunningState(false, false)
                 }
-            }
         }
     }
 
@@ -416,8 +390,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     private fun applyRunningState(isLoading: Boolean, isRunning: Boolean) {
         if (isLoading) return
 
-        // Sync WebView toggle state
-        binding.fabToggle.evaluateJavascript("javascript:setState($isRunning)", null)
+        binding.fabToggle.setChecked(isRunning)
 
         if (isRunning) {
             setTestState(getString(R.string.connection_connected))

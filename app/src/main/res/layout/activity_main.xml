@@ -302,7 +302,7 @@
                     android:layout_marginEnd="12dp"
                     android:layout_marginBottom="12dp">
 
-                    <WebView
+                    <com.v2ray.ang.ui.PlaneToggleView
                         android:id="@+id/fab_toggle"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
@@ -310,8 +310,6 @@
                         android:clickable="true"
                         android:focusable="false"
                         android:focusableInTouchMode="false"
-                        android:layerType="software"
-                        android:overScrollMode="never"
                         android:contentDescription="@string/tasker_start_service" />
 
                 </FrameLayout>
