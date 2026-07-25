@@ -217,18 +217,6 @@
                             android:clickable="true"
                             android:focusable="true" />
 
-                        <TextView
-                            android:id="@+id/btn_more"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp"
-                            android:text="⋮"
-                            android:textSize="22sp"
-                            android:textColor="#8CFFFFFF"
-                            android:clickable="true"
-                            android:focusable="true" />
                     </LinearLayout>
                 </androidx.appcompat.widget.Toolbar>
 

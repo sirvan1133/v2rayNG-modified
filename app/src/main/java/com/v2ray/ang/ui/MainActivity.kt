@@ -127,7 +127,6 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         binding.btnAutoConnect.setOnClickListener { autoConnectBestServer() }
         binding.btnAddClipboard.setOnClickListener { importClipboard() }
         binding.btnAddConfig.setOnClickListener { showImportMenu(it) }
-        binding.btnMore.setOnClickListener { showMainGlassMenu(it) }
 
         setupGroupTab()
         setupViewModel()
@@ -591,24 +590,6 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         return false
-    }
-
-    private fun showMainGlassMenu(anchor: View) {
-        val items = listOf(
-            GlassMenuItem(label = getString(R.string.title_service_restart)) { restartV2Ray() },
-            GlassMenuItem(label = getString(R.string.title_del_all_config)) { delAllConfig() },
-            GlassMenuItem(label = getString(R.string.title_del_duplicate_config)) { delDuplicateConfig() },
-            GlassMenuItem(label = getString(R.string.title_del_invalid_config)) { delInvalidConfig() },
-            GlassMenuItem(label = getString(R.string.title_export_all)) { exportAll() },
-            GlassMenuItem(label = getString(R.string.title_ping_all_server)) {
-                toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
-                mainViewModel.testAllRealPing()
-            },
-            GlassMenuItem(label = getString(R.string.title_sort_by_test_results)) { sortByTestResults() },
-            GlassMenuItem(label = getString(R.string.title_locate_selected_config)) { updateMapDestination() },
-            GlassMenuItem(label = getString(R.string.title_sub_update)) { importConfigViaSub() },
-        )
-        GlassMenuHelper.show(anchor, items)
     }
 
     private fun showImportMenu(anchor: View) {
