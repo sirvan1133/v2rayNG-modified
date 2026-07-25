@@ -304,8 +304,8 @@
 
                     <WebView
                         android:id="@+id/fab_toggle"
-                        android:layout_width="63dp"
-                        android:layout_height="63dp"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
                         android:background="@null"
                         android:clickable="true"
                         android:focusable="false"

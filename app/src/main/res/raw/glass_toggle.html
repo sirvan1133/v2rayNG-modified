@@ -1,167 +1,93 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      display: grid;
-      place-items: center;
-      background: transparent;
-      font-family: sans-serif;
-      overflow: hidden;
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .toggle {
-      width: 63px;
-      height: 63px;
-      border: none;
-      border-radius: 15px;
-      background: linear-gradient(
-        145deg,
-        rgba(255, 255, 255, 0.16),
-        rgba(255, 255, 255, 0.05)
-      );
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      box-shadow: none;
-      position: relative;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      transition: transform 0.2s ease, box-shadow 0.35s ease;
-      overflow: hidden;
-      outline: none;
-      -webkit-focus-ring-color: transparent;
-    }
-
-    .toggle:active {
-      transform: scale(0.98);
-    }
-
-    .icon-wrap {
-      width: 37px;
-      height: 37px;
-      position: relative;
-      display: grid;
-      place-items: center;
-      border-radius: 11px;
-      background:
-        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.33), rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      box-shadow:
-        inset 0 1px 2px rgba(255, 255, 255, 0.22),
-        inset 0 -4px 8px rgba(0, 0, 0, 0.15),
-        0 4px 10px rgba(0, 0, 0, 0.18);
-      overflow: hidden;
-      transition: box-shadow 0.45s ease, border-color 0.45s ease;
-    }
-
-    .icon-wrap::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.3),
-        rgba(255, 255, 255, 0.02) 45%,
-        transparent
-      );
-      pointer-events: none;
-    }
-
-    .shape {
-      position: absolute;
-      width: 23px;
-      height: 23px;
-      display: grid;
-      place-items: center;
-      transition:
-        opacity 0.45s ease,
-        transform 0.55s cubic-bezier(.2,.85,.2,1),
-        filter 0.45s ease;
-    }
-
-    .shape svg {
+    html,
+    body {
       width: 100%;
       height: 100%;
-      overflow: visible;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: transparent;
     }
 
-    .circle {
-      opacity: 1;
-      transform: scale(1) rotate(0deg);
-      filter: drop-shadow(0 0 4px rgba(180, 180, 180, 0.12));
+    .plane-fab {
+      width: 62px;
+      height: 62px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: 50%;
+      outline: none;
+      cursor: pointer;
+      color: #90a4ae;
+      background: #37474f;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+      transition:
+        transform .18s ease,
+        background .35s ease,
+        color .35s ease,
+        box-shadow .35s ease;
     }
 
-    .circle circle {
-      fill: rgba(150, 156, 168, 0.92);
-      transition: fill 0.45s ease;
+    .plane-fab:active {
+      transform: scale(.94);
     }
 
-    .play {
-      opacity: 0;
-      transform: scale(0.72) translateX(-1px);
-      filter: drop-shadow(0 0 0 rgba(34, 197, 94, 0));
+    .plane-fab svg {
+      width: 26px;
+      height: 26px;
+      transform: rotate(35deg);
+      transition: transform .35s cubic-bezier(.2, .8, .2, 1);
     }
 
-    .play path {
-      fill: rgba(34, 197, 94, 0.96);
-      transition: fill 0.45s ease;
+    .plane-fab.on {
+      color: #fff;
+      background: #00bfa5;
+      box-shadow: 0 8px 24px rgba(0, 191, 165, .45);
+      animation: planeFloat 3s ease-in-out infinite;
     }
 
-    .toggle.active {
-      box-shadow: none;
+    .plane-fab.on svg {
+      transform: rotate(0);
     }
 
-    .toggle.active .icon-wrap {
-      border-color: rgba(90, 255, 157, 0.24);
-      box-shadow:
-        inset 0 1px 2px rgba(255, 255, 255, 0.22),
-        inset 0 -4px 8px rgba(0, 0, 0, 0.15),
-        0 0 11px rgba(34, 197, 94, 0.18),
-        0 4px 10px rgba(0, 0, 0, 0.18);
-    }
-
-    .toggle.active .circle {
-      opacity: 0;
-      transform: scale(0.62) rotate(-12deg);
-      filter: blur(1px);
-    }
-
-    .toggle.active .play {
-      opacity: 1;
-      transform: scale(1) translateX(0);
-      filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45));
+    @keyframes planeFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
   </style>
 </head>
 <body>
-  <button class="toggle" id="toggleBtn">
-    <div class="icon-wrap">
-      <div class="shape circle">
-        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="26"/></svg>
-      </div>
-      <div class="shape play">
-        <svg viewBox="0 0 100 100"><path d="M30 20 C25 22.5 22 27 22 33 V67 C22 73 25 77.5 30 80 C35 82.5 41 82 46 79 L70 64 C76 60 79 55.5 79 50 C79 44.5 76 40 70 36 L46 21 C41 18 35 17.5 30 20Z"/></svg>
-      </div>
-    </div>
+  <button class="plane-fab" id="planeFab" type="button" aria-label="روشن یا خاموش کردن VPN">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+    </svg>
   </button>
 
   <script>
-    var btn = document.getElementById("toggleBtn");
+    var fab = document.getElementById("planeFab");
     var isOn = false;
-    btn.addEventListener("click", function() {
+
+    fab.addEventListener("click", function () {
       isOn = !isOn;
-      btn.classList.toggle("active");
+      fab.classList.toggle("on", isOn);
       Android.onToggle(isOn);
     });
+
     function setState(on) {
-      isOn = on;
-      if (on) btn.classList.add("active"); else btn.classList.remove("active");
+      isOn = Boolean(on);
+      fab.classList.toggle("on", isOn);
     }
   </script>
 </body>
