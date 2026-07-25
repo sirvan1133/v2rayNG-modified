@@ -297,8 +297,10 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         val webView = binding.fabToggle
         webView.settings.javaScriptEnabled = true
         webView.settings.allowFileAccess = false
-        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+        webView.setBackgroundColor(Color.TRANSPARENT)
         webView.background = null
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
         webView.isVerticalScrollBarEnabled = false
         webView.isHorizontalScrollBarEnabled = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

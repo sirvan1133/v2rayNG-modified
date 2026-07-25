@@ -306,10 +306,12 @@
                         android:id="@+id/fab_toggle"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
-                        android:background="@null"
+                        android:background="@android:color/transparent"
                         android:clickable="true"
                         android:focusable="false"
                         android:focusableInTouchMode="false"
+                        android:layerType="software"
+                        android:overScrollMode="never"
                         android:contentDescription="@string/tasker_start_service" />
 
                 </FrameLayout>
