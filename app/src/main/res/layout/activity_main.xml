@@ -299,13 +299,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginEnd="12dp"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginEnd="0dp"
+                    android:layout_marginBottom="0dp">
 
                     <com.v2ray.ang.ui.PlaneToggleView
                         android:id="@+id/fab_toggle"
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
                         android:background="@android:color/transparent"
                         android:clickable="true"
                         android:focusable="false"

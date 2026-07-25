@@ -83,7 +83,7 @@ class PlaneToggleView @JvmOverloads constructor(
             ColorUtils.blendARGB(Color.BLACK, Color.rgb(0, 191, 165), stateProgress),
             shadowAlpha
         )
-        circlePaint.setShadowLayer((8f + 4f * stateProgress) * density, 0f, 4f * density, shadowColor)
+        circlePaint.setShadowLayer((7f + 3f * stateProgress) * density, 0f, 3f * density, shadowColor)
         canvas.drawCircle(cx, cy, radius, circlePaint)
 
         val iconScale = 26f * density / 24f
