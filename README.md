@@ -1,4 +1,4 @@
-# v2rayNG Modified — v2.7.0
+# v2rayNG Modified 
 
 A redesigned and feature-enhanced Android client based on
 [v2rayNG](https://github.com/2dust/v2rayNG).
