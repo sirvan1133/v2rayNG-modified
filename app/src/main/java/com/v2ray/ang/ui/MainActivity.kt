@@ -157,7 +157,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     private fun setupWeatherScene() {
         val alternator = WeatherMapAlternator(this, binding.cinematicMap, binding.cinematicWeather)
         weatherAlternator = alternator
-        alternator.setEnabled(MmkvManager.decodeSettingsBool("weather_scene_enabled", true))
+        alternator.setEnabled(MmkvManager.decodeSettingsBool("weather_scene_enabled", false))
         checkAndRequestPermissionWithResult(PermissionType.LOCATION) {
             alternator.start()
         }
@@ -1067,7 +1067,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         val weatherSwitch = weatherItem.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)
         val marketSwitch = marketItem.actionView?.findViewById<WidgetToggleView>(R.id.widget_switch)
 
-        val weatherEnabled = MmkvManager.decodeSettingsBool("weather_scene_enabled", true)
+        val weatherEnabled = MmkvManager.decodeSettingsBool("weather_scene_enabled", false)
         val marketEnabled = marketController?.isEnabled() == true
         weatherSwitch?.setCheckedImmediately(weatherEnabled)
         marketSwitch?.setCheckedImmediately(marketEnabled)
