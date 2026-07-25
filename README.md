@@ -7,9 +7,7 @@ A redesigned and feature-enhanced Android client based on
 
 ## Screenshots
 
-All screenshots are captured from v2.7.0 in dark mode.
 
-تمام تصاویر از نسخه 2.7.0 و در حالت شب گرفته شده‌اند.
 
 | Home, vector map & live direct ping | Widget controls | Weather, market & IP location |
 | :---: | :---: | :---: |
