@@ -352,7 +352,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         groupPagerAdapter.update(groups)
 
         val names = groups.map { group ->
-            subscriptionGroupTitle(group.id, group.remarks, includeCount = false)
+            subscriptionGroupTitle(group.id, group.remarks)
         }
         if (!::subGroupAdapter.isInitialized) {
             subGroupAdapter = SubGroupAdapter { position ->
@@ -383,26 +383,20 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     fun refreshGroupTabTitles(refreshAll: Boolean = false) {
         val groups = mainViewModel.getSubscriptions(this)
         val names = groups.map { group ->
-            subscriptionGroupTitle(group.id, group.remarks, includeCount = true)
+            subscriptionGroupTitle(group.id, group.remarks)
         }
         subGroupAdapter.submitList(names)
     }
 
     private fun subscriptionGroupTitle(
         subscriptionId: String,
-        fallback: String,
-        includeCount: Boolean
+        fallback: String
     ): String {
         val subscription = MmkvManager.decodeSubscription(subscriptionId)
         val username = subscription
             ?.let { AngConfigManager.resolveSubscriptionUsername(it) }
             .orEmpty()
-        val title = username.ifBlank { fallback }
-        return if (includeCount) {
-            "$title (${MmkvManager.decodeServerList(subscriptionId).size})"
-        } else {
-            title
-        }
+        return username.ifBlank { fallback }
     }
 
     private fun setupToggleView() {
