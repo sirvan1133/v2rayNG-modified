@@ -17,5 +17,5 @@ data class SubscriptionItem(
     var trafficDownload: Long = 0,
     var trafficTotal: Long = 0,
     var trafficExpire: Long = 0,
+    var username: String = "",
 )
-

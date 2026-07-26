@@ -3,6 +3,7 @@ package com.v2ray.ang.handler
 import android.content.Context
 import android.graphics.Bitmap
 import android.text.TextUtils
+import android.util.Base64
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.CoreConfigManager
@@ -28,8 +29,110 @@ import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.QRCodeDecoder
 import com.v2ray.ang.util.Utils
 import java.net.URI
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 object AngConfigManager {
+
+    private val hiddenIdentifierPattern =
+        Regex("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+
+    fun resolveSubscriptionUsername(
+        subscription: SubscriptionItem,
+        headers: Map<String, String>? = null
+    ): String {
+        val headerKeys = listOf("X-Username", "Username", "User-Name", "X-User-Id", "User-Id")
+        headerKeys.forEach { wanted ->
+            sanitizeUsername(
+                headers?.entries?.firstOrNull { it.key.equals(wanted, true) }?.value
+            )?.let { return it }
+        }
+
+        val subscriptionUserInfo = headers?.entries
+            ?.firstOrNull { it.key.equals("Subscription-Userinfo", true) }
+            ?.value
+        subscriptionUserInfo
+            ?.split(";")
+            ?.mapNotNull { part ->
+                val pair = part.trim().split("=", limit = 2)
+                if (pair.size == 2) pair[0].trim() to pair[1].trim() else null
+            }
+            ?.firstOrNull { (key, _) ->
+                key.equals("username", true) ||
+                    key.equals("user", true) ||
+                    key.equals("email", true) ||
+                    key.equals("uid", true)
+            }
+            ?.second
+            ?.let { sanitizeUsername(it) }
+            ?.let { return it }
+
+        sanitizeUsername(subscription.username)?.let { return it }
+
+        try {
+            val uri = URI(subscription.url)
+            val query = uri.rawQuery.orEmpty()
+                .split("&")
+                .mapNotNull { part ->
+                    val pair = part.split("=", limit = 2)
+                    if (pair.size != 2) null else {
+                        URLDecoder.decode(pair[0], StandardCharsets.UTF_8.name()) to
+                            URLDecoder.decode(pair[1], StandardCharsets.UTF_8.name())
+                    }
+                }
+                .toMap()
+            listOf("username", "user", "email", "uid", "client_id").forEach { key ->
+                query.entries.firstOrNull { it.key.equals(key, true) }?.value?.let { value ->
+                    sanitizeUsername(value)?.let { return it }
+                }
+            }
+        } catch (_: Exception) {
+        }
+
+        val profileTitle = headers?.entries
+            ?.firstOrNull { it.key.equals("Profile-Title", true) }
+            ?.value
+        sanitizeUsername(decodeProfileTitle(profileTitle))?.let { return it }
+        return ""
+    }
+
+    private fun decodeProfileTitle(value: String?): String? {
+        val decoded = value?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.name()) }
+            ?.trim()
+            .orEmpty()
+        if (!decoded.startsWith("base64:", true)) return decoded
+        return try {
+            val payload = decoded.substringAfter(":")
+            String(Base64.decode(payload, Base64.DEFAULT), StandardCharsets.UTF_8)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun sanitizeUsername(value: String?): String? {
+        val cleaned = value
+            ?.trim()
+            ?.trim('"', '\'')
+            ?.takeIf { it.length in 2..64 }
+            ?: return null
+        if (
+            cleaned.lowercase() in setOf(
+                "subscription",
+                "default",
+                "traffic",
+                "v2ray",
+                "v2rayng",
+                "import sub"
+            )
+        ) {
+            return null
+        }
+        if (hiddenIdentifierPattern.matches(cleaned)) return null
+        if (cleaned.length > 28 && cleaned.all { it.isLetterOrDigit() || it == '-' || it == '_' }) {
+            return null
+        }
+        return cleaned
+    }
 
     // Parser mapping for different config types (lazy initialized)
     private val configFmtParsers: Map<String, (String) -> ProfileItem?> by lazy {
@@ -607,6 +710,9 @@ object AngConfigManager {
                         }
                     }
                 }
+                resolveSubscriptionUsername(it.subscription, headers)
+                    .takeIf { username -> username.isNotBlank() }
+                    ?.let { username -> it.subscription.username = username }
             }
 
             val count = parseConfigViaSub(configText, it.guid, false)

@@ -583,7 +583,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                         used = subItem.trafficUpload + subItem.trafficDownload
                         total = subItem.trafficTotal
                         expire = subItem.trafficExpire
-                        label = subItem.remarks
+                        val username = AngConfigManager.resolveSubscriptionUsername(subItem)
+                        label = "Username: \"${username.ifBlank { "Unknown" }}\""
                         LogUtil.d(AppConfig.TAG, "TrafficPoll: subId=$subId used=$used total=$total expire=$expire label=$label")
                     } else {
                         LogUtil.d(AppConfig.TAG, "TrafficPoll: subItem is null for subId=$subId")
