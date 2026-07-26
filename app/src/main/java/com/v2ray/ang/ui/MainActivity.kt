@@ -356,9 +356,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
         if (!::subGroupAdapter.isInitialized) {
             subGroupAdapter = SubGroupAdapter { position ->
-                // Switching instantly avoids rendering both heavy server lists at
-                // once. The cards already have their own appearance transition.
-                binding.viewPager.setCurrentItem(position, false)
+                switchSubscriptionPage(position)
             }
             binding.rvSubGroups.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false)
             binding.rvSubGroups.adapter = subGroupAdapter
@@ -378,6 +376,35 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         })
 
         refreshGroupTabTitles(true)
+    }
+
+    /**
+     * Uses one hardware-composited layer to introduce the new page. ViewPager's
+     * built-in smooth scroll is intentionally disabled because it renders both
+     * RecyclerViews (and their map/ping content) at the same time.
+     */
+    private fun switchSubscriptionPage(position: Int) {
+        val pager = binding.viewPager
+        val previous = pager.currentItem
+        if (previous == position) return
+
+        pager.animate().cancel()
+        pager.alpha = 1f
+        pager.translationX = 0f
+
+        val direction = if (position > previous) 1f else -1f
+        val offset = resources.displayMetrics.density * 12f * direction
+
+        pager.setCurrentItem(position, false)
+        pager.alpha = .84f
+        pager.translationX = offset
+        pager.animate()
+            .alpha(1f)
+            .translationX(0f)
+            .setDuration(210L)
+            .setInterpolator(android.view.animation.PathInterpolator(.2f, .8f, .2f, 1f))
+            .withLayer()
+            .start()
     }
 
     fun refreshGroupTabTitles(refreshAll: Boolean = false) {
