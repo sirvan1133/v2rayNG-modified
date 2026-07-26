@@ -35,7 +35,7 @@ class PlaneToggleView @JvmOverloads constructor(
     private var floatAnimator: ValueAnimator? = null
     private var onCheckedChange: ((Boolean) -> Unit)? = null
     private var inactiveColor = Color.GRAY
-    private var activeColor = Color.CYAN
+    private val activeColor = Color.rgb(0, 191, 165)
     private var inactiveIconColor = Color.LTGRAY
     private var activeIconColor = Color.WHITE
 
@@ -161,7 +161,6 @@ class PlaneToggleView @JvmOverloads constructor(
 
     private fun refreshThemeColors() {
         inactiveColor = ContextCompat.getColor(context, R.color.color_fab_inactive)
-        activeColor = ContextCompat.getColor(context, R.color.color_fab_active)
         inactiveIconColor = ContextCompat.getColor(context, R.color.tg_onSurfaceVariant)
         activeIconColor = ContextCompat.getColor(context, R.color.colorWhite)
     }
