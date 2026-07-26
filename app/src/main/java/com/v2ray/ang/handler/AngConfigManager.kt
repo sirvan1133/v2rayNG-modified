@@ -36,61 +36,6 @@ object AngConfigManager {
 
     private val hiddenIdentifierPattern =
         Regex("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
-    fun resolveSubscriptionConfigIdentity(subscriptionId: String): String {
-        if (subscriptionId.isBlank()) return ""
-        val candidates = MmkvManager.decodeServerList(subscriptionId).mapNotNull { guid ->
-            val profile = MmkvManager.decodeServerConfig(guid)
-            profile?.username
-                ?.trim()
-                ?.takeIf {
-                    it.length in 2..128 &&
-                        !it.startsWith("http://", true) &&
-                        !it.startsWith("https://", true)
-                }
-                ?: extractOutboundUserIdentity(MmkvManager.decodeServerRaw(guid))
-                ?: profile?.password
-                    ?.trim()
-                    ?.takeIf { hiddenIdentifierPattern.matches(it) }
-        }
-        return candidates
-            .groupingBy { it }
-            .eachCount()
-            .maxByOrNull { it.value }
-            ?.key
-            .orEmpty()
-    }
-
-    private fun extractOutboundUserIdentity(rawConfig: String?): String? {
-        val root = JsonUtil.parseString(rawConfig) ?: return null
-        val outbounds = root.getAsJsonArray("outbounds") ?: return null
-        outbounds.forEach { outboundElement ->
-            val settings = outboundElement.asJsonObject?.getAsJsonObject("settings") ?: return@forEach
-            listOf("vnext", "servers").forEach { serverKey ->
-                val servers = settings.getAsJsonArray(serverKey) ?: return@forEach
-                servers.forEach { serverElement ->
-                    val users = serverElement.asJsonObject?.getAsJsonArray("users")
-                        ?: return@forEach
-                    users.forEach { userElement ->
-                        val user = userElement.asJsonObject ?: return@forEach
-                        listOf("email", "username", "user", "id").forEach { key ->
-                            val value = user.get(key)
-                                ?.takeIf { it.isJsonPrimitive }
-                                ?.asString
-                                ?.trim()
-                                ?.takeIf {
-                                    it.length in 2..128 &&
-                                        !it.startsWith("http://", true) &&
-                                        !it.startsWith("https://", true)
-                                }
-                            if (value != null) return value
-                        }
-                    }
-                }
-            }
-        }
-        return null
-    }
-
     fun resolveSubscriptionUsername(
         subscription: SubscriptionItem,
         headers: Map<String, String>? = null
@@ -768,6 +713,15 @@ object AngConfigManager {
                     .takeIf { username -> username.isNotBlank() }
                     ?.let { username -> it.subscription.username = username }
             }
+            fetchMarzbanUsername(
+                subscriptionUrl = url,
+                userAgent = userAgent,
+                httpPort = SettingsManager.getHttpPort(),
+                proxyUsername = proxyUsername,
+                proxyPassword = proxyPassword
+            )?.let { username ->
+                it.subscription.username = username
+            }
 
             val count = parseConfigViaSub(configText, it.guid, false)
             if (count > 0) {
@@ -785,6 +739,57 @@ object AngConfigManager {
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to update config via subscription", e)
             return SubscriptionUpdateResult(failureCount = 1)
+        }
+    }
+
+    private fun fetchMarzbanUsername(
+        subscriptionUrl: String,
+        userAgent: String?,
+        httpPort: Int,
+        proxyUsername: String?,
+        proxyPassword: String?
+    ): String? {
+        val infoUrl = buildMarzbanInfoUrl(subscriptionUrl) ?: return null
+        val proxiedRequest = UrlContentRequest(
+            url = infoUrl,
+            userAgent = userAgent,
+            timeout = 10000,
+            httpPort = httpPort,
+            proxyUsername = proxyUsername,
+            proxyPassword = proxyPassword
+        )
+        val body = try {
+            HttpUtil.getUrlContentWithHeaders(proxiedRequest).body
+        } catch (_: Exception) {
+            try {
+                HttpUtil.getUrlContentWithHeaders(
+                    UrlContentRequest(url = infoUrl, userAgent = userAgent, timeout = 10000)
+                ).body
+            } catch (_: Exception) {
+                return null
+            }
+        }
+        val json = JsonUtil.parseString(body) ?: return null
+        val username = json.get("username")
+            ?.takeIf { it.isJsonPrimitive }
+            ?.asString
+            ?: json.getAsJsonObject("user")
+                ?.get("username")
+                ?.takeIf { it.isJsonPrimitive }
+                ?.asString
+        return sanitizeUsername(username)
+    }
+
+    private fun buildMarzbanInfoUrl(subscriptionUrl: String): String? {
+        return try {
+            val uri = URI(subscriptionUrl)
+            val segments = uri.path.trim('/').split('/').filter { it.isNotBlank() }
+            val subIndex = segments.indexOfLast { it.equals("sub", true) }
+            if (subIndex < 0 || subIndex + 1 >= segments.size) return null
+            val infoPath = "/" + (segments.take(subIndex + 2) + "info").joinToString("/")
+            URI(uri.scheme, uri.userInfo, uri.host, uri.port, infoPath, null, null).toString()
+        } catch (_: Exception) {
+            null
         }
     }
 
