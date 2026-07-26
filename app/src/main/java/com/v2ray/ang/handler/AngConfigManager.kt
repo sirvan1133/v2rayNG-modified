@@ -360,8 +360,8 @@ object AngConfigManager {
                     MmkvManager.removeServerViaSubid(subid)
                 }
                 val keyToProfile = batchSaveConfigs(configs, subid)
-                val matchKey = findMatchedProfileKey(keyToProfile, removedSelected)
-                matchKey?.let { MmkvManager.setSelectServer(it) }
+                val matchKey = findMatchedProfileKey(keyToProfile, removedSelected?.profile)
+                restoreSelectedProfile(subid, matchKey, removedSelected?.position)
             }
 
             return configs.size
@@ -457,15 +457,39 @@ object AngConfigManager {
     }
 
     /**
-     * Returns the currently selected profile if it belongs to the target subscription and will be replaced.
+     * Captures the selected profile and its visible position before a subscription
+     * replacement. The new GUID can then be restored to the same list position.
      */
-    private fun getRemovedSelectedProfile(subid: String, append: Boolean): ProfileItem? {
+    private data class RemovedSelectedProfile(
+        val profile: ProfileItem,
+        val position: Int
+    )
+
+    private fun getRemovedSelectedProfile(subid: String, append: Boolean): RemovedSelectedProfile? {
         if (subid.isBlank() || append) return null
 
-        return MmkvManager.getSelectServer()
-            .takeIf { it?.isNotBlank() == true }
-            ?.let { MmkvManager.decodeServerConfig(it) }
+        val selectedGuid = MmkvManager.getSelectServer()
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+        val profile = MmkvManager.decodeServerConfig(selectedGuid)
             ?.takeIf { it.subscriptionId == subid }
+            ?: return null
+        val position = MmkvManager.decodeServerList(subid).indexOf(selectedGuid)
+        return RemovedSelectedProfile(profile, position)
+    }
+
+    private fun restoreSelectedProfile(subid: String, matchedKey: String?, oldPosition: Int?) {
+        if (matchedKey.isNullOrBlank()) return
+        MmkvManager.setSelectServer(matchedKey)
+
+        if (oldPosition == null || oldPosition < 0) return
+        val serverList = MmkvManager.decodeServerList(subid)
+        val currentPosition = serverList.indexOf(matchedKey)
+        if (currentPosition < 0 || currentPosition == oldPosition) return
+
+        serverList.removeAt(currentPosition)
+        serverList.add(oldPosition.coerceIn(0, serverList.size), matchedKey)
+        MmkvManager.encodeServerList(serverList, subid)
     }
 
     /**
@@ -517,8 +541,8 @@ object AngConfigManager {
                         count += 1
                     }
                     if (count > 0) {
-                        val matchKey = findMatchedProfileKey(keyToProfile, removedSelected)
-                        matchKey?.let { MmkvManager.setSelectServer(it) }
+                        val matchKey = findMatchedProfileKey(keyToProfile, removedSelected?.profile)
+                        restoreSelectedProfile(subid, matchKey, removedSelected?.position)
                     }
                     return count
                 }
