@@ -40,6 +40,10 @@ import java.util.Collections
 import java.util.regex.PatternSyntaxException
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    companion object {
+        const val FULL_REFRESH_WITHOUT_ANIMATION = -2
+    }
+
     private var serverList = mutableListOf<String>() // MmkvManager.decodeServerList()
     var subscriptionId: String = MmkvManager.decodeSettingsString(AppConfig.CACHE_SUBSCRIPTION_ID, "").orEmpty()
     var keywordFilter = ""
@@ -80,7 +84,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Reloads the server list based on current subscription filter.
      */
-    fun reloadServerList() {
+    fun reloadServerList(animateChanges: Boolean = true) {
         serverList = if (subscriptionId.isEmpty()) {
             MmkvManager.decodeAllServerList()
         } else {
@@ -88,7 +92,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         updateCache()
-        updateListAction.value = -1
+        updateListAction.value = if (animateChanges) -1 else FULL_REFRESH_WITHOUT_ANIMATION
     }
 
     /**

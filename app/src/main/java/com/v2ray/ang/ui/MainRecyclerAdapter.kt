@@ -69,10 +69,14 @@ class MainRecyclerAdapter(
     private var data: MutableList<ServersCache> = mutableListOf()
     private var animateSelectionGuid: String? = null
 
+    @SuppressLint("NotifyDataSetChanged")
     fun setData(newData: MutableList<ServersCache>?, position: Int = -1) {
         val updated = newData?.toMutableList() ?: mutableListOf()
 
-        if (position >= 0 && position in updated.indices && data.size == updated.size) {
+        if (position == MainViewModel.FULL_REFRESH_WITHOUT_ANIMATION) {
+            data = updated
+            notifyDataSetChanged()
+        } else if (position >= 0 && position in updated.indices && data.size == updated.size) {
             data = updated
             notifyItemChanged(position)
         } else {

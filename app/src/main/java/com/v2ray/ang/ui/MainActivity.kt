@@ -698,7 +698,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
             val result = mainViewModel.updateConfigViaSubAll()
             if (result.configCount > 0) {
                 withContext(Dispatchers.Main) {
-                    mainViewModel.reloadServerList()
+                    mainViewModel.reloadServerList(animateChanges = false)
                     refreshGroupTabTitles()
                 }
             }
@@ -966,7 +966,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                     )
                 }
                 if (result.configCount > 0) {
-                    mainViewModel.reloadServerList()
+                    mainViewModel.reloadServerList(animateChanges = false)
                     refreshGroupTabTitles()
                 }
                 hideLoading()
