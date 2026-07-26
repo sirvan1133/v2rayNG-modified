@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import com.v2ray.ang.AppConfig
@@ -66,15 +67,27 @@ class MainRecyclerAdapter(
 
     private val doubleColumnDisplay = MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)
     private var data: MutableList<ServersCache> = mutableListOf()
+    private var animateSelectionGuid: String? = null
 
-    @SuppressLint("NotifyDataSetChanged")
     fun setData(newData: MutableList<ServersCache>?, position: Int = -1) {
-        data = newData?.toMutableList() ?: mutableListOf()
+        val updated = newData?.toMutableList() ?: mutableListOf()
 
-        if (position >= 0 && position in data.indices) {
+        if (position >= 0 && position in updated.indices && data.size == updated.size) {
+            data = updated
             notifyItemChanged(position)
         } else {
-            notifyDataSetChanged()
+            val previous = data
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize() = previous.size
+                override fun getNewListSize() = updated.size
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+                    previous[oldItemPosition].guid == updated[newItemPosition].guid
+
+                override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+                    previous[oldItemPosition] == updated[newItemPosition]
+            }, false)
+            data = updated
+            diff.dispatchUpdatesTo(this)
         }
     }
 
@@ -94,6 +107,7 @@ class MainRecyclerAdapter(
             holder.itemMainBinding.tvSubscription.visibility = View.VISIBLE
 
             val isSelected = guid == MmkvManager.getSelectServer()
+            val shouldAnimateSelection = isSelected && animateSelectionGuid == guid
             val card = holder.itemMainBinding.infoContainer
             val outerGlow = holder.itemMainBinding.selectionGlow
             card.animate().cancel()
@@ -102,40 +116,44 @@ class MainRecyclerAdapter(
             card.setBackgroundResource(R.drawable.bg_server_card_glass)
             if (isSelected) {
                 card.setBackgroundResource(R.drawable.bg_server_card_selected)
+                card.elevation = 8f * holder.itemView.resources.displayMetrics.density
+                if (shouldAnimateSelection) {
+                    animateSelectionGuid = null
+                    outerGlow.alpha = 0f
+                    outerGlow.scaleX = .96f
+                    outerGlow.scaleY = .92f
+                    outerGlow.animate()
+                        .alpha(.58f)
+                        .scaleX(1.015f)
+                        .scaleY(1.04f)
+                        .setDuration(380)
+                        .setInterpolator(android.view.animation.PathInterpolator(.16f, 1f, .3f, 1f))
+                        .start()
+                    card.alpha = .92f
+                    card.scaleX = .995f
+                    card.scaleY = .995f
+                    card.animate()
+                        .alpha(1f)
+                        .scaleX(1.006f)
+                        .scaleY(1.006f)
+                        .setDuration(360)
+                        .setInterpolator(android.view.animation.PathInterpolator(.16f, 1f, .3f, 1f))
+                        .start()
+                } else {
+                    outerGlow.alpha = .58f
+                    outerGlow.scaleX = 1.015f
+                    outerGlow.scaleY = 1.04f
+                    card.alpha = 1f
+                    card.scaleX = 1.006f
+                    card.scaleY = 1.006f
+                }
+            } else {
                 outerGlow.alpha = 0f
                 outerGlow.scaleX = .96f
                 outerGlow.scaleY = .92f
-                outerGlow.animate()
-                    .alpha(.58f)
-                    .scaleX(1.015f)
-                    .scaleY(1.04f)
-                    .setDuration(380)
-                    .setInterpolator(android.view.animation.PathInterpolator(.16f, 1f, .3f, 1f))
-                    .start()
-                card.alpha = .92f
-                card.scaleX = .995f
-                card.scaleY = .995f
-                card.elevation = 8f * holder.itemView.resources.displayMetrics.density
-                card.animate()
-                    .alpha(1f)
-                    .scaleX(1.006f)
-                    .scaleY(1.006f)
-                    .setDuration(360)
-                    .setInterpolator(android.view.animation.PathInterpolator(.16f, 1f, .3f, 1f))
-                    .start()
-            } else {
-                outerGlow.animate()
-                    .alpha(0f)
-                    .scaleX(.96f)
-                    .scaleY(.92f)
-                    .setDuration(180)
-                    .start()
-                card.animate()
-                    .alpha(.98f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(180)
-                    .start()
+                card.alpha = .98f
+                card.scaleX = 1f
+                card.scaleY = 1f
                 card.elevation = 6f * holder.itemView.resources.displayMetrics.density
             }
             holder.itemView.setBackgroundColor(Color.TRANSPARENT)
@@ -345,9 +363,10 @@ class MainRecyclerAdapter(
         }
     }
 
-    fun setSelectServer(fromPosition: Int, toPosition: Int) {
-        notifyItemChanged(fromPosition)
-        notifyItemChanged(toPosition)
+    fun setSelectServer(fromPosition: Int, toPosition: Int, selectedGuid: String) {
+        animateSelectionGuid = selectedGuid
+        if (fromPosition in data.indices) notifyItemChanged(fromPosition)
+        if (toPosition in data.indices) notifyItemChanged(toPosition)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {

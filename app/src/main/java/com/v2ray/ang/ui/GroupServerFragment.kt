@@ -245,7 +245,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
             ownerActivity.updateMapDestination(wasRunning)
             val fromPosition = mainViewModel.getPosition(selected.orEmpty())
             val toPosition = mainViewModel.getPosition(guid)
-            adapter.setSelectServer(fromPosition, toPosition)
+            adapter.setSelectServer(fromPosition, toPosition, guid)
 
             if (wasRunning) {
                 ownerActivity.restartV2Ray()

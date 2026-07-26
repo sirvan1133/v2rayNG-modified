@@ -356,7 +356,9 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
         if (!::subGroupAdapter.isInitialized) {
             subGroupAdapter = SubGroupAdapter { position ->
-                binding.viewPager.setCurrentItem(position, true)
+                // Switching instantly avoids rendering both heavy server lists at
+                // once. The cards already have their own appearance transition.
+                binding.viewPager.setCurrentItem(position, false)
             }
             binding.rvSubGroups.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false)
             binding.rvSubGroups.adapter = subGroupAdapter
@@ -372,8 +374,6 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         binding.viewPager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 subGroupAdapter.setSelected(position)
-                val group = groups.getOrNull(position) ?: return@onPageSelected
-                mainViewModel.subscriptionId = group.id
             }
         })
 

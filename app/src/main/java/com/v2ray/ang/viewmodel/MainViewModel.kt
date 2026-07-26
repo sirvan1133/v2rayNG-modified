@@ -248,10 +248,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * @param id The new subscription ID.
      */
     fun subscriptionIdChanged(id: String) {
-        if (subscriptionId != id) {
-            subscriptionId = id
-            MmkvManager.encodeSettings(AppConfig.CACHE_SUBSCRIPTION_ID, subscriptionId)
-        }
+        if (subscriptionId == id) return
+        subscriptionId = id
+        MmkvManager.encodeSettings(AppConfig.CACHE_SUBSCRIPTION_ID, subscriptionId)
         reloadServerList()
     }
 

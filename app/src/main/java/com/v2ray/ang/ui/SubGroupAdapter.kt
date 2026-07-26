@@ -25,10 +25,11 @@ class SubGroupAdapter(
     }
 
     fun setSelected(position: Int) {
+        if (selectedPos == position) return
         val old = selectedPos
         selectedPos = position
-        notifyItemChanged(old)
-        notifyItemChanged(position)
+        if (old in items.indices) notifyItemChanged(old)
+        if (position in items.indices) notifyItemChanged(position)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
