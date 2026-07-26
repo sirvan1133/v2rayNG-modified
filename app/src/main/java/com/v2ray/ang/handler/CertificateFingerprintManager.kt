@@ -17,9 +17,9 @@ object CertificateFingerprintManager {
     fun fetchForManualFill(profile: ProfileItem): String? {
         val request = buildRequest(profile) ?: return null
         val result = if (profile.configType == EConfigType.HYSTERIA2) {
-            fetch("quic", request) { Libv2ray.fetchQuicCertSha256(it) }
+            fetch("quic", request) { invokeOptionalCoreApi("fetchQuicCertSha256", it) }
         } else {
-            fetch("tls", request) { Libv2ray.fetchTlsCertSha256(it) }
+            fetch("tls", request) { invokeOptionalCoreApi("fetchTlsCertSha256", it) }
         }
 
         return result
@@ -60,6 +60,12 @@ object CertificateFingerprintManager {
             LogUtil.e(AppConfig.TAG, "Fetch $type cert SHA-256 failed", e)
             null
         }
+    }
+
+    private fun invokeOptionalCoreApi(methodName: String, requestJson: String): String {
+        val method = Libv2ray::class.java.getMethod(methodName, String::class.java)
+        return method.invoke(null, requestJson) as? String
+            ?: throw NoSuchMethodException("$methodName returned no result")
     }
 
     private fun resolveDialAddress(server: String): String {

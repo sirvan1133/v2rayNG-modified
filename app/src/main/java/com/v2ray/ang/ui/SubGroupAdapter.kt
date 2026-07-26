@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ItemSubGroupBinding
@@ -55,14 +56,18 @@ class SubGroupAdapter(
             b.tvName.text = name
             stopPulse()
             if (selected) {
-                b.card.setBackgroundResource(R.drawable.tg_sub_glass_selected)
+                b.card.setBackgroundResource(R.drawable.bg_server_card_selected)
                 b.dot.setBackgroundResource(R.drawable.tg_sub_dot_on)
-                b.tvArrow.setTextColor(0x8CFFFFFF.toInt())
+                b.tvArrow.setTextColor(
+                    ContextCompat.getColor(b.root.context, R.color.tg_onSurface)
+                )
                 startPulse()
             } else {
-                b.card.setBackgroundResource(R.drawable.tg_sub_glass_normal)
+                b.card.setBackgroundResource(R.drawable.bg_server_card_glass)
                 b.dot.setBackgroundResource(R.drawable.tg_sub_dot_off)
-                b.tvArrow.setTextColor(0x59FFFFFF.toInt())
+                b.tvArrow.setTextColor(
+                    ContextCompat.getColor(b.root.context, R.color.tg_onSurfaceVariant)
+                )
             }
         }
 
