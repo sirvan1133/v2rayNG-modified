@@ -369,6 +369,8 @@ class MainRecyclerAdapter(
         if (toPosition in data.indices) notifyItemChanged(toPosition)
     }
 
+    fun positionOf(guid: String): Int = data.indexOfFirst { it.guid == guid }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         return when (viewType) {
             VIEW_TYPE_ITEM ->

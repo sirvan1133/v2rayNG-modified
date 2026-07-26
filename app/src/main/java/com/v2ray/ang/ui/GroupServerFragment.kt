@@ -74,6 +74,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
         }
         addCustomDividerToRecyclerView(binding.recyclerView, R.drawable.custom_divider)
         binding.recyclerView.adapter = adapter
+        adapter.setData(mainViewModel.serversForSubscription(subId))
 
         itemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter, allowSwipe = false))
         itemTouchHelper?.attachToRecyclerView(binding.recyclerView)
@@ -88,7 +89,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
                 return@observe
             }
             // LogUtil.d(TAG, "GroupServerFragment updateListAction subId=$subId")
-            adapter.setData(mainViewModel.serversCache, index)
+            adapter.setData(mainViewModel.serversForSubscription(subId), index)
         }
 
         // LogUtil.d(TAG, "GroupServerFragment onViewCreated: subId=$subId")
@@ -97,6 +98,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
     override fun onResume() {
         super.onResume()
         mainViewModel.subscriptionIdChanged(subId)
+        adapter.setData(mainViewModel.serversForSubscription(subId))
     }
 
     /**
@@ -243,8 +245,8 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
             if (wasRunning) ownerActivity.preserveMapDuringServerRestart()
             MmkvManager.setSelectServer(guid)
             ownerActivity.updateMapDestination(wasRunning)
-            val fromPosition = mainViewModel.getPosition(selected.orEmpty())
-            val toPosition = mainViewModel.getPosition(guid)
+            val fromPosition = adapter.positionOf(selected.orEmpty())
+            val toPosition = adapter.positionOf(guid)
             adapter.setSelectServer(fromPosition, toPosition, guid)
 
             if (wasRunning) {
@@ -302,7 +304,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
         }
 
         // Find the position of the selected server
-        val serversCache = mainViewModel.serversCache
+        val serversCache = mainViewModel.serversForSubscription(subId)
         val position = serversCache.indexOfFirst { it.guid == selectedGuid }
         val recyclerView = binding.recyclerView
 

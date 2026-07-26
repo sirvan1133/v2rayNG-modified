@@ -44,6 +44,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var subscriptionId: String = MmkvManager.decodeSettingsString(AppConfig.CACHE_SUBSCRIPTION_ID, "").orEmpty()
     var keywordFilter = ""
     val serversCache = mutableListOf<ServersCache>()
+    private val serversBySubscription = mutableMapOf<String, List<ServersCache>>()
     val isRunning by lazy { MutableLiveData<Boolean>() }
     val updateListAction by lazy { MutableLiveData<Int>() }
     val updateTestResultAction by lazy { MutableLiveData<String>() }
@@ -124,17 +125,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     @Synchronized
     fun updateCache() {
+        val updated = buildServerCache(serverList)
         serversCache.clear()
+        serversCache.addAll(updated)
+        serversBySubscription[subscriptionId] = updated.toList()
+    }
+
+    /**
+     * Returns a stable list owned by one subscription page. Pager fragments
+     * must not render the shared [serversCache], because that list changes as
+     * soon as another subscription becomes active.
+     */
+    @Synchronized
+    fun serversForSubscription(id: String): MutableList<ServersCache> {
+        serversBySubscription[id]?.let { return it.toMutableList() }
+        val guids = if (id.isEmpty()) {
+            MmkvManager.decodeAllServerList()
+        } else {
+            MmkvManager.decodeServerList(id)
+        }
+        return buildServerCache(guids).also {
+            serversBySubscription[id] = it.toList()
+        }
+    }
+
+    private fun buildServerCache(guids: List<String>): MutableList<ServersCache> {
+        val output = mutableListOf<ServersCache>()
         val kw = keywordFilter.trim()
         val searchRegex = try {
             if (kw.isNotEmpty()) Regex(kw, setOf(RegexOption.IGNORE_CASE)) else null
         } catch (e: PatternSyntaxException) {
             null // Fallback to literal search if regex is invalid
         }
-        for (guid in serverList) {
+        for (guid in guids) {
             val profile = MmkvManager.decodeServerConfig(guid) ?: continue
             if (kw.isEmpty()) {
-                serversCache.add(ServersCache(guid, profile))
+                output.add(ServersCache(guid, profile))
                 continue
             }
 
@@ -147,9 +173,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 || server.matchesPattern(searchRegex, kw)
                 || protocol.matchesPattern(searchRegex, kw)
             ) {
-                serversCache.add(ServersCache(guid, profile))
+                output.add(ServersCache(guid, profile))
             }
         }
+        return output
     }
 
     /**
@@ -427,6 +454,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         keywordFilter = keyword
+        serversBySubscription.clear()
         reloadServerList()
     }
 
