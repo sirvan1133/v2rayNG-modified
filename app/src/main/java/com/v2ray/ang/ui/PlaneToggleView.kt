@@ -2,6 +2,7 @@ package com.v2ray.ang.ui
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,7 +11,9 @@ import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import com.v2ray.ang.R
 import kotlin.math.sin
 
 class PlaneToggleView @JvmOverloads constructor(
@@ -31,8 +34,13 @@ class PlaneToggleView @JvmOverloads constructor(
     private var stateAnimator: ValueAnimator? = null
     private var floatAnimator: ValueAnimator? = null
     private var onCheckedChange: ((Boolean) -> Unit)? = null
+    private var inactiveColor = Color.GRAY
+    private var activeColor = Color.CYAN
+    private var inactiveIconColor = Color.LTGRAY
+    private var activeIconColor = Color.WHITE
 
     init {
+        refreshThemeColors()
         setLayerType(LAYER_TYPE_SOFTWARE, null)
         isClickable = true
         isFocusable = true
@@ -85,10 +93,10 @@ class PlaneToggleView @JvmOverloads constructor(
         val floatOffset = if (checked) sin(floatPhase * Math.PI * 2).toFloat() * 2f * density else 0f
         val cy = height / 2f + floatOffset
 
-        circlePaint.color = ColorUtils.blendARGB(Color.rgb(55, 71, 79), Color.rgb(0, 191, 165), stateProgress)
+        circlePaint.color = ColorUtils.blendARGB(inactiveColor, activeColor, stateProgress)
         val shadowAlpha = (115 + 25 * stateProgress).toInt()
         val shadowColor = ColorUtils.setAlphaComponent(
-            ColorUtils.blendARGB(Color.BLACK, Color.rgb(0, 191, 165), stateProgress),
+            ColorUtils.blendARGB(Color.BLACK, activeColor, stateProgress),
             shadowAlpha
         )
         circlePaint.setShadowLayer((7f + 3f * stateProgress) * density, 0f, 3f * density, shadowColor)
@@ -108,9 +116,21 @@ class PlaneToggleView @JvmOverloads constructor(
         planePath.lineTo(17f, 12f)
         planePath.lineTo(2f, 14f)
         planePath.close()
-        planePaint.color = ColorUtils.blendARGB(Color.rgb(144, 164, 174), Color.WHITE, stateProgress)
+        planePaint.color =
+            ColorUtils.blendARGB(inactiveIconColor, activeIconColor, stateProgress)
         canvas.drawPath(planePath, planePaint)
         canvas.restore()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        refreshThemeColors()
+        invalidate()
+    }
+
+    override fun onAttachedToWindow() {
+        refreshThemeColors()
+        super.onAttachedToWindow()
     }
 
     override fun onDetachedFromWindow() {
@@ -137,6 +157,13 @@ class PlaneToggleView @JvmOverloads constructor(
             }
             start()
         }
+    }
+
+    private fun refreshThemeColors() {
+        inactiveColor = ContextCompat.getColor(context, R.color.color_fab_inactive)
+        activeColor = ContextCompat.getColor(context, R.color.color_fab_active)
+        inactiveIconColor = ContextCompat.getColor(context, R.color.tg_onSurfaceVariant)
+        activeIconColor = ContextCompat.getColor(context, R.color.colorWhite)
     }
 
     private fun ValueAnimator.doOnEnd(action: () -> Unit) {
