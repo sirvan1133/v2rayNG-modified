@@ -1,5 +1,6 @@
 package com.v2ray.ang.market
 
+import android.util.Log
 import android.view.View
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -21,7 +22,12 @@ class MarketRatesController(
     private val view: MarketRatesView
 ) : DefaultLifecycleObserver {
 
-    data class Asset(val id: String, val label: String, val patterns: List<String>)
+    data class Asset(
+        val id: String,
+        val label: String,
+        val marketSlug: String,
+        val patterns: List<String>
+    )
 
     private data class PageCache(
         var body: String? = null,
@@ -34,7 +40,6 @@ class MarketRatesController(
         .readTimeout(7, TimeUnit.SECONDS)
         .build()
     private val currencyCache = PageCache()
-    private val goldCache = PageCache()
     private var job: Job? = null
     private var scene = false
     private var ratesCache = emptyList<MarketRate>()
@@ -114,23 +119,17 @@ class MarketRatesController(
     }
 
     private fun fetch(selected: Set<String>): List<MarketRate> {
-        val currencyHtml = normalize(get(CURRENCY_URL, currencyCache) ?: return emptyList())
+        val currencyHtml = get(CURRENCY_URL, currencyCache) ?: return emptyList()
+        val normalizedHtml by lazy { normalize(currencyHtml) }
         val output = mutableListOf<MarketRate>()
 
-        ASSETS.filter { it.id in selected && it.id != "gold" }.forEach { asset ->
-            extract(currencyHtml, asset.patterns)?.let { rial ->
+        ASSETS.filter { it.id in selected }.forEach { asset ->
+            (extractBySlug(currencyHtml, asset.marketSlug)
+                ?: extract(normalizedHtml, asset.patterns))?.let { rial ->
                 output += MarketRate(asset.id, asset.label, rial / 10L)
             }
         }
-
-        if ("gold" in selected) {
-            get(GOLD_URL, goldCache)
-                ?.let(::normalize)
-                ?.let { extract(it, listOf("طلای 18 عیار", "طلای ۱۸ عیار", "طلا 18", "طلا ۱۸")) }
-                ?.let { rial ->
-                    output += MarketRate("gold", "طلای ۱۸", rial / 10L)
-                }
-        }
+        Log.d(TAG, "Parsed ${output.size}/${selected.size} selected market rates")
         return output
     }
 
@@ -152,27 +151,46 @@ class MarketRatesController(
                     cache.etag = response.header("ETag")
                     cache.lastModified = response.header("Last-Modified")
                 }
-                else -> null
+                else -> {
+                    Log.w(TAG, "TGJU request failed with HTTP ${response.code}")
+                    null
+                }
             }
         }
-    } catch (_: Exception) {
+    } catch (error: Exception) {
+        Log.w(TAG, "TGJU request failed: ${error.javaClass.simpleName}: ${error.message}")
         cache.body
+    }
+
+    private fun extractBySlug(html: String, slug: String): Long? {
+        val row = Regex(
+            """(?is)<tr\b[^>]*\bdata-market-(?:nameslug|row)\s*=\s*["']${Regex.escape(slug)}["'][^>]*>"""
+        ).find(html)?.value ?: return null
+        return Regex("""\bdata-price\s*=\s*["']([0-9۰-۹٠-٩][0-9۰-۹٠-٩,٬]*)["']""")
+            .find(row)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.toAsciiDigits()
+            ?.replace(",", "")
+            ?.replace("٬", "")
+            ?.toLongOrNull()
     }
 
     private fun normalize(html: String): String =
         html.replace(Regex("(?is)<script.*?</script>|<style.*?</style>"), " ")
             .replace(Regex("(?s)<[^>]+>"), " ")
             .replace("&nbsp;", " ")
-            .replace("&zwnj;", "‌")
-            .map { char ->
-                when (char) {
-                    '۰' -> '0'; '۱' -> '1'; '۲' -> '2'; '۳' -> '3'; '۴' -> '4'
-                    '۵' -> '5'; '۶' -> '6'; '۷' -> '7'; '۸' -> '8'; '۹' -> '9'
-                    else -> char
-                }
-            }
-            .joinToString("")
+            .replace("&zwnj;", "\u200c")
+            .toAsciiDigits()
             .replace(Regex("\\s+"), " ")
+
+    private fun String.toAsciiDigits(): String = map { char ->
+        when (char) {
+            in '۰'..'۹' -> '0' + (char - '۰')
+            in '٠'..'٩' -> '0' + (char - '٠')
+            else -> char
+        }
+    }.joinToString("")
 
     private fun extract(text: String, labels: List<String>): Long? {
         for (label in labels) {
@@ -192,16 +210,16 @@ class MarketRatesController(
         const val KEY_SELECTED = "market_widget_selected"
         private const val KEY_DEFAULTS_272_APPLIED = "market_widget_defaults_272_applied"
         private const val CURRENCY_URL = "https://www.tgju.org/currency"
-        private const val GOLD_URL = "https://www.tgju.org/gold-chart"
         private const val REFRESH_INTERVAL = 300_000L
+        private const val TAG = "MarketRates"
 
         val ASSETS = listOf(
-            Asset("usd", "دلار", listOf("دلار آمریکا", "دلار")),
-            Asset("eur", "یورو", listOf("یورو")),
-            Asset("gold", "طلای ۱۸", listOf("طلای 18 عیار", "طلای ۱۸ عیار")),
-            Asset("gbp", "پوند انگلیس", listOf("پوند انگلیس", "پوند")),
-            Asset("try", "لیر ترکیه", listOf("لیر ترکیه", "لیر")),
-            Asset("iqd", "دینار عراق", listOf("دینار عراق", "دینار"))
+            Asset("usd", "دلار", "price_dollar_rl", listOf("دلار آمریکا", "دلار")),
+            Asset("eur", "یورو", "price_eur", listOf("یورو")),
+            Asset("gold", "طلای ۱۸", "geram18", listOf("طلای 18 عیار", "طلای ۱۸ عیار")),
+            Asset("gbp", "پوند انگلیس", "price_gbp", listOf("پوند انگلیس", "پوند")),
+            Asset("try", "لیر ترکیه", "price_try", listOf("لیر ترکیه", "لیر")),
+            Asset("iqd", "دینار عراق", "price_iqd", listOf("دینار عراق", "دینار"))
         )
     }
 }

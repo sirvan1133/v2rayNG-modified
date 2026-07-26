@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.graphics.ColorUtils
@@ -37,6 +38,13 @@ class PlaneToggleView @JvmOverloads constructor(
         isFocusable = true
         setBackgroundColor(Color.TRANSPARENT)
         setOnClickListener {
+            performHapticFeedback(
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    HapticFeedbackConstants.CONFIRM
+                } else {
+                    HapticFeedbackConstants.VIRTUAL_KEY
+                }
+            )
             setChecked(!checked, true)
             onCheckedChange?.invoke(checked)
         }

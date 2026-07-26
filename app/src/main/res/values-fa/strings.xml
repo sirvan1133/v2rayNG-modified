@@ -301,6 +301,8 @@
     <string name="title_del_invalid_config">حذف کانفیگ های نامعتبر گروه فعلی (ابتدا آزمایش کنید)</string>
     <string name="title_export_all">خروجی گرفتن کانفیگ های غیرسفارشی گروه فعلی در کلیپ ‌بورد</string>
     <string name="title_sub_setting">تنظیمات گروه‌ اشتراک</string>
+    <string name="subscription_hero_title">مدیریت حرفه‌ای اشتراک‌ها</string>
+    <string name="subscription_hero_description">منابع کانفیگ را دسته‌بندی، به‌روزرسانی و از یک بخش مدیریت کنید.</string>
     <string name="sub_setting_remarks">ملاحظات</string>
     <string name="sub_setting_url">نشانی اینترنتی اختیاری</string>
     <string name="sub_setting_user_agent">User Agent</string>

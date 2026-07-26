@@ -2,6 +2,7 @@ package com.v2ray.ang.ui
 
 import android.animation.ValueAnimator
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -67,7 +68,7 @@ object GlassMenuHelper {
     fun show(
         anchor: View,
         items: List<GlassMenuItem>,
-        widthPx: Int = (220 * anchor.resources.displayMetrics.density).toInt()
+        widthPx: Int = (143 * anchor.resources.displayMetrics.density).toInt()
     ) {
         dismiss()
 
@@ -114,14 +115,31 @@ object GlassMenuHelper {
         rv.layoutManager = LinearLayoutManager(context)
         rv.adapter = adapter
 
-        val itemH = (48 * anchor.resources.displayMetrics.density).toInt()
-        val maxH = ((items.size * itemH) + (16 * anchor.resources.displayMetrics.density)).toInt()
+        val dm = anchor.resources.displayMetrics
+        val margin = (12 * dm.density).toInt()
+        val itemH = (36 * dm.density).toInt()
+        val visibleFrame = Rect()
+        anchor.rootView.getWindowVisibleDisplayFrame(visibleFrame)
+        if (visibleFrame.width() <= 0 || visibleFrame.height() <= 0) {
+            visibleFrame.set(0, 0, dm.widthPixels, dm.heightPixels)
+        }
+        val safeWidth = widthPx.coerceAtMost((visibleFrame.width() - margin * 2).coerceAtLeast(1))
+        menuView.measure(
+            View.MeasureSpec.makeMeasureSpec(safeWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val desiredHeight = menuView.measuredHeight
+            .takeIf { it > 0 }
+            ?: (items.size * itemH + (12 * dm.density).toInt())
+        val safeHeight = desiredHeight.coerceAtMost(
+            (visibleFrame.height() - margin * 2).coerceAtLeast(itemH)
+        )
 
-        val popup = PopupWindow(menuView, widthPx, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        val popup = PopupWindow(menuView, safeWidth, safeHeight, true)
         popup.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
-        popup.elevation = 24f
+        popup.elevation = 0f
         popup.isOutsideTouchable = true
-        popup.isClippingEnabled = false
+        popup.isClippingEnabled = true
         popup.setOnDismissListener {
             currentPopup = null
             clearBackdropBlur()
@@ -142,31 +160,34 @@ object GlassMenuHelper {
             }
         }
 
-        val dm = anchor.resources.displayMetrics
-        val screenH = dm.heightPixels
         val anchorLoc = IntArray(2)
         anchor.getLocationOnScreen(anchorLoc)
-
-        val spaceAbove = anchorLoc[1]
-        val spaceBelow = screenH - anchorLoc[1] - anchor.height
-        val popupH = maxH.coerceAtMost(screenH - 16 * dm.density.toInt())
-
-        if (spaceBelow >= popupH + 8) {
-            popup.showAsDropDown(anchor, 0, 4)
-        } else if (spaceAbove >= popupH + 8) {
-            popup.showAsDropDown(anchor, 0, -(anchor.height + popupH + 4))
-        } else {
-            popup.showAtLocation(anchor.rootView, android.view.Gravity.CENTER, 0, 0)
+        val minX = visibleFrame.left + margin
+        val maxX = (visibleFrame.right - safeWidth - margin).coerceAtLeast(minX)
+        val popupX = (anchorLoc[0] + anchor.width - safeWidth).coerceIn(minX, maxX)
+        val belowY = anchorLoc[1] + anchor.height + (4 * dm.density).toInt()
+        val aboveY = anchorLoc[1] - safeHeight - (4 * dm.density).toInt()
+        val minY = visibleFrame.top + margin
+        val maxY = (visibleFrame.bottom - safeHeight - margin).coerceAtLeast(minY)
+        val popupY = when {
+            belowY <= maxY -> belowY
+            aboveY >= minY -> aboveY
+            else -> ((visibleFrame.top + visibleFrame.bottom - safeHeight) / 2)
+                .coerceIn(minY, maxY)
         }
-
-        popup.width = widthPx
+        popup.showAtLocation(
+            anchor.rootView,
+            android.view.Gravity.TOP or android.view.Gravity.START,
+            popupX,
+            popupY
+        )
         currentPopup = popup
 
         // Match the supplied HTML motion: lift + scale from 85% to full size.
         menuView.alpha = 0f
-        menuView.scaleX = .85f
-        menuView.scaleY = .85f
-        menuView.translationY = -15f * dm.density
+        menuView.scaleX = .96f
+        menuView.scaleY = .96f
+        menuView.translationY = -8f * dm.density
         menuView.post {
             menuView.pivotX = menuView.width.toFloat()
             menuView.pivotY = 0f
@@ -205,7 +226,10 @@ object GlassMenuHelper {
             } else {
                 holder.b.tvMenuItem.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
             }
-            holder.itemView.setOnClickListener { onClick(item, holder.bindingAdapterPosition) }
+            holder.itemView.setOnClickListener { view ->
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick(item, holder.bindingAdapterPosition)
+            }
         }
     }
 }

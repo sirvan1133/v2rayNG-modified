@@ -2,48 +2,65 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/tg_primary"
+    android:background="@drawable/bg_drawer_clock"
     android:gravity="center"
     android:orientation="vertical"
-    android:paddingTop="48dp"
-    android:paddingBottom="20dp">
+    android:paddingStart="20dp"
+    android:paddingTop="42dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="18dp">
 
-    <FrameLayout
+    <TextView
+        android:id="@+id/tv_drawer_clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:includeFontPadding="false"
+        android:text="00:00"
+        android:textColor="@color/drawer_calendar_accent"
+        android:textSize="42sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_drawer_jalali"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:textColor="@color/drawer_calendar_title"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/tv_drawer_gregorian"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:textColor="@color/drawer_calendar_muted"
+        android:textSize="12sp" />
+
+    <com.v2ray.ang.ui.DrawerCalendarView
+        android:id="@+id/drawer_calendar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:contentDescription="Current month calendar" />
+
+    <View
         android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginBottom="12dp">
-
-        <View
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:background="@drawable/tg_avatar_circle_bg" />
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="12dp"
-            android:src="@drawable/ic_app_icon_circle"
-            android:contentDescription="@string/app_name" />
-    </FrameLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/app_name"
-        android:textColor="@color/tg_onPrimary"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:fontFamily="sans-serif-medium" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="1dp"
         android:layout_marginTop="2dp"
-        android:gravity="center"
+        android:background="@color/tg_outlineVariant" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fontFamily="sans-serif-medium"
         android:text="ویرایش شده توسط s.ahmadi"
-        android:textColor="#B3FFFFFF"
-        android:textSize="12sp"
-        android:fontFamily="sans-serif" />
+        android:textColor="@color/tg_primary"
+        android:textSize="11sp" />
 
 </LinearLayout>

@@ -63,7 +63,7 @@
                         android:layout_weight="1"
                         android:text="Traffic"
                         android:textSize="12sp"
-                        android:textColor="#8CFFFFFF" />
+                        android:textColor="@color/tg_onSurfaceVariant" />
 
                     <TextView
                         android:id="@+id/tv_traffic_percent"
@@ -72,7 +72,7 @@
                         android:text="0%"
                         android:textSize="13sp"
                         android:textStyle="bold"
-                        android:textColor="#EBFFFFFF" />
+                        android:textColor="@color/tg_onSurface" />
                 </LinearLayout>
 
                 <FrameLayout
@@ -101,7 +101,7 @@
                         android:layout_weight="1"
                         android:text="0 B"
                         android:textSize="11sp"
-                        android:textColor="#73FFFFFF" />
+                        android:textColor="@color/tg_onSurfaceVariant" />
 
                     <TextView
                         android:id="@+id/tv_traffic_remaining"
@@ -111,7 +111,7 @@
                         android:gravity="center"
                         android:text="0 B"
                         android:textSize="11sp"
-                        android:textColor="#73FFFFFF" />
+                        android:textColor="@color/tg_onSurfaceVariant" />
 
                     <TextView
                         android:id="@+id/tv_traffic_total"
@@ -121,7 +121,7 @@
                         android:gravity="end"
                         android:text="0 B"
                         android:textSize="11sp"
-                        android:textColor="#73FFFFFF" />
+                        android:textColor="@color/tg_onSurfaceVariant" />
                 </LinearLayout>
 
                 <TextView
@@ -160,15 +160,16 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_marginStart="18dp"
                     android:layout_marginEnd="4dp"
-                    android:background="@drawable/bg_top_actions_solid"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="5dp">
+                    android:paddingHorizontal="2dp">
 
                         <TextView
                             android:id="@+id/btn_update_sub"
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_top_action_chip"
                             android:gravity="center"
                             android:paddingHorizontal="8dp"
                             android:text="@string/title_update_subscription"
@@ -181,7 +182,9 @@
                         <TextView
                             android:id="@+id/btn_auto_connect"
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_top_action_chip"
                             android:gravity="center"
                             android:paddingHorizontal="9dp"
                             android:text="@string/auto_connect"
@@ -194,7 +197,9 @@
                         <TextView
                             android:id="@+id/btn_add_clipboard"
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_top_action_chip"
                             android:gravity="center"
                             android:paddingHorizontal="9dp"
                             android:text="@string/title_add_from_clipboard"
@@ -207,7 +212,9 @@
                         <TextView
                             android:id="@+id/btn_add_config"
                             android:layout_width="42dp"
-                            android:layout_height="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_top_action_chip"
                             android:gravity="center"
                             android:text="+"
                             android:textSize="25sp"

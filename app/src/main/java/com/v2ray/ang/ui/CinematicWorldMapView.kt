@@ -34,10 +34,10 @@ class CinematicWorldMapView @JvmOverloads constructor(
         ?.isLowRamDevice == true
     private val surfaceColor = resolveThemeColor(com.google.android.material.R.attr.colorSurface)
     private val isLightTheme = ColorUtils.calculateLuminance(surfaceColor) > .5
-    private var oceanColor = if (isLightTheme) Color.rgb(250, 249, 255) else Color.rgb(5, 16, 26)
-    private var landColor = if (isLightTheme) Color.rgb(239, 237, 251) else Color.rgb(13, 42, 61)
-    private var borderColor = if (isLightTheme) Color.rgb(210, 202, 241) else Color.rgb(73, 164, 192)
-    private var accentColor = if (isLightTheme) Color.rgb(100, 73, 177) else Color.rgb(94, 238, 255)
+    private var oceanColor = if (isLightTheme) Color.rgb(244, 248, 251) else Color.rgb(5, 16, 26)
+    private var landColor = if (isLightTheme) Color.rgb(220, 229, 237) else Color.rgb(13, 42, 61)
+    private var borderColor = if (isLightTheme) Color.rgb(150, 170, 186) else Color.rgb(73, 164, 192)
+    private var accentColor = if (isLightTheme) Color.rgb(42, 171, 238) else Color.rgb(94, 238, 255)
     private val activeColor = Color.rgb(132, 242, 112)
     private val coastPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = landColor }
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

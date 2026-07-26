@@ -4,20 +4,21 @@
     android:id="@+id/item_bg"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_vertical">
+    android:gravity="center_vertical"
+    android:paddingVertical="5dp">
 
     <LinearLayout
         android:id="@+id/info_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="?attr/selectableItemBackground"
+        android:background="@drawable/bg_subscription_card"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
         android:nextFocusRight="@+id/layout_share"
         android:orientation="horizontal"
-        android:padding="@dimen/padding_spacing_dp8">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,6 +43,8 @@
                         android:layout_height="wrap_content"
                         android:maxLines="2"
                         android:minLines="1"
+                        android:textColor="@color/tg_onSurface"
+                        android:fontFamily="sans-serif-medium"
                         android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
 
                 </LinearLayout>
@@ -138,6 +141,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:lines="2"
+                        android:textColor="@color/tg_onSurfaceVariant"
                         android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
                 </LinearLayout>
@@ -170,6 +174,7 @@
                     android:id="@+id/tv_last_updated"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/tg_onSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"/>
 
             </LinearLayout>

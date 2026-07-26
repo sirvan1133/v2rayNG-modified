@@ -4,7 +4,9 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -51,6 +53,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -112,16 +117,19 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         binding.viewPager.adapter = groupPagerAdapter
         binding.viewPager.isUserInputEnabled = true
 
-        // setup navigation drawer
-        setupNavigationDrawer()
         marketController = MarketRatesController(this, binding.marketRates)
+        // The controller must exist before drawer toggles read its default state.
+        setupNavigationDrawer()
 
         setupToggleView()
         binding.layoutTest.setOnClickListener { handleLayoutTestClick() }
-        binding.btnUpdateSub.setOnClickListener { importConfigViaSub() }
-        binding.btnAutoConnect.setOnClickListener { autoConnectBestServer() }
-        binding.btnAddClipboard.setOnClickListener { importClipboard() }
-        binding.btnAddConfig.setOnClickListener { showImportMenu(it) }
+        binding.btnUpdateSub.setOnClickListener { animateTopAction(it) { importConfigViaSub() } }
+        binding.btnAutoConnect.setOnClickListener { animateTopAction(it) { autoConnectBestServer() } }
+        binding.btnAddClipboard.setOnClickListener { animateTopAction(it) { importClipboard() } }
+        binding.btnAddConfig.setOnClickListener { view ->
+            view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+            animateTopAction(view) { showImportMenu(view) }
+        }
 
         setupGroupTab()
         setupViewModel()
@@ -215,6 +223,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         } catch (_: Exception) {
         }
         setupWidgetToggles()
+        setupDrawerClock()
+        setupDailyDrawerScrollHint()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -227,6 +237,95 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                 }
             }
         })
+    }
+
+    private fun animateTopAction(view: View, action: () -> Unit) {
+        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        view.animate().cancel()
+        view.animate()
+            .scaleX(.92f)
+            .scaleY(.92f)
+            .alpha(.72f)
+            .setDuration(90)
+            .withEndAction {
+                view.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .alpha(1f)
+                    .setDuration(180)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(1.4f))
+                    .start()
+            }
+            .start()
+        action()
+    }
+
+    private fun setupDrawerClock() {
+        val header = binding.navView.getHeaderView(0)
+        val clock = header.findViewById<android.widget.TextView>(R.id.tv_drawer_clock)
+        val jalali = header.findViewById<android.widget.TextView>(R.id.tv_drawer_jalali)
+        val gregorian = header.findViewById<android.widget.TextView>(R.id.tv_drawer_gregorian)
+        val calendar = header.findViewById<DrawerCalendarView>(R.id.drawer_calendar)
+        lifecycleScope.launch {
+            calendar.setMonthData(CalendarOccasionRepository.currentMonth())
+        }
+        lifecycleScope.launch {
+            while (isActive) {
+                val now = Date()
+                clock.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
+                gregorian.text = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.ENGLISH).format(now)
+                jalali.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    android.icu.text.SimpleDateFormat(
+                        "EEEE، d MMMM yyyy",
+                        Locale.forLanguageTag("fa-IR-u-ca-persian")
+                    ).format(now)
+                } else {
+                    SimpleDateFormat("EEEE، d MMMM yyyy", Locale("fa", "IR")).format(now)
+                }
+                calendar.invalidate()
+                delay(20_000L)
+            }
+        }
+    }
+
+    /**
+     * Once per day, gently reveals that the drawer contains more items below
+     * the large calendar, then returns the user to the top.
+     */
+    private fun setupDailyDrawerScrollHint() {
+        val preferences = getSharedPreferences("drawer_scroll_hint", MODE_PRIVATE)
+        var animationRunning = false
+        binding.drawerLayout.addDrawerListener(
+            object : androidx.drawerlayout.widget.DrawerLayout.SimpleDrawerListener() {
+                override fun onDrawerOpened(drawerView: android.view.View) {
+                    if (drawerView !== binding.navView || animationRunning) return
+                    val todayKey = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+                    if (preferences.getString("last_shown_date", "") == todayKey) return
+
+                    val menuList = binding.navView.getChildAt(0)
+                        as? androidx.recyclerview.widget.RecyclerView ?: return
+                    menuList.postDelayed({
+                        if (!binding.drawerLayout.isDrawerOpen(binding.navView) ||
+                            !menuList.canScrollVertically(1)
+                        ) {
+                            return@postDelayed
+                        }
+                        animationRunning = true
+                        preferences.edit().putString("last_shown_date", todayKey).apply()
+                        val distance = (resources.displayMetrics.density * 165f).toInt()
+                        val interpolator =
+                            android.view.animation.PathInterpolator(0.22f, 1f, 0.36f, 1f)
+                        menuList.smoothScrollBy(0, distance, interpolator, 1350)
+                        menuList.postDelayed({
+                            if (binding.drawerLayout.isDrawerOpen(binding.navView)) {
+                                menuList.smoothScrollBy(0, -distance, interpolator, 1550)
+                            }
+                            menuList.postDelayed({ animationRunning = false }, 1600)
+                        }, 1850)
+                    }, 550)
+                }
+            }
+        )
     }
 
     private fun setupViewModel() {
@@ -508,17 +607,20 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
                         val progressColorLight = android.graphics.Color.HSVToColor(floatArrayOf(hue.coerceAtLeast(0f), 0.90f, 0.62f))
 
                         val progressFill = binding.trafficProgressFill
-                        val layoutParams = progressFill.layoutParams
-                        val parentWidth = (progressFill.parent as android.view.View).width
-                        layoutParams.width = (parentWidth * usedPercent / 100f).toInt().coerceAtLeast(0)
-                        progressFill.layoutParams = layoutParams
-
                         val gradient = android.graphics.drawable.GradientDrawable(
                             android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
                             intArrayOf(progressColor, progressColorLight)
                         )
                         gradient.cornerRadius = 0f
                         progressFill.background = gradient
+                        // The first refresh can run before the traffic track is measured.
+                        // Defer width calculation so the colored fill is visible immediately.
+                        (progressFill.parent as android.view.View).post {
+                            val parentWidth = (progressFill.parent as android.view.View).width
+                            progressFill.layoutParams = progressFill.layoutParams.apply {
+                                width = (parentWidth * usedPercent / 100f).toInt().coerceAtLeast(0)
+                            }
+                        }
 
                         binding.tvTrafficPercent.setTextColor(android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.85f, 0.60f)))
 

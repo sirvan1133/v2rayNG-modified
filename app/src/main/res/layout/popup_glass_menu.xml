@@ -3,8 +3,8 @@
     android:id="@+id/rv_menu"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/tg_glass_menu_bg"
+    android:background="@android:color/transparent"
     android:paddingVertical="6dp"
     android:clipToPadding="false"
     android:overScrollMode="never"
-    android:elevation="24dp" />
+    android:elevation="0dp" />

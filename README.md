@@ -7,11 +7,9 @@ A redesigned and feature-enhanced Android client based on
 
 ## Screenshots
 
-
-
-| Home, vector map & live direct ping | Widget controls | Weather, market & IP location |
-| :---: | :---: | :---: |
-| <img src="screenshots/home-live-ping-dark.png" alt="Home screen with live ping" width="320"> | <img src="screenshots/widget-settings-dark.png" alt="Localized widget controls" width="320"> | <img src="screenshots/weather-market-map-dark.png" alt="Weather, market and map" width="320"> |
+| Light tools | Dark tools | Light calendar | Dark calendar |
+| :---: | :---: | :---: | :---: |
+| <img src="screenshots/tools-light.png" alt="Responsive tools in light mode" width="240"> | <img src="screenshots/tools-dark.png" alt="Responsive tools in dark mode" width="240"> | <img src="screenshots/calendar-light.png" alt="Persian calendar in light mode" width="240"> | <img src="screenshots/calendar-dark.png" alt="Persian calendar in dark mode" width="240"> |
 
 ## Added features compared with standard v2rayNG
 
@@ -39,6 +37,18 @@ A redesigned and feature-enhanced Android client based on
 - Throttled concurrent measurements to reduce battery and network usage
 - **Auto Connect** measures reachable servers and connects to the fastest
   configuration
+
+### Persian calendar and responsive controls
+
+- Live Persian calendar inside the navigation drawer
+- Daily occasion and official-holiday data sourced from Bahesab
+- Official holidays and their occasion text highlighted in red
+- Calendar height adapts automatically to the number and length of occasions
+- Smooth once-per-day drawer scroll hint revealing additional settings
+- Resolution-aware Add and configuration menus that never leave the visible screen
+- Compact borderless tool cards fading from fully solid to transparent
+- Subtle system haptics for VPN toggle, Add, configuration menus, and menu actions
+- Refined light theme colors, contrast, cards, map, widgets, and popup presentation
 
 ### Cinematic vector IP-location map
 
@@ -110,6 +120,18 @@ A redesigned and feature-enhanced Android client based on
 - ثابت‌ماندن جهت بخش کانفیگ‌ها و ترافیک در زبان فارسی و انگلیسی
 - حالت نیمه‌شفاف هنگام جابه‌جایی کانفیگ به‌جای سفیدشدن کامل کارت
 - پنل بالایی شامل Update، اتصال خودکار، Clipboard و منوی بیشتر
+
+### تقویم فارسی و کنترل‌های واکنش‌گرا
+
+- تقویم زنده فارسی در منوی همبرگری
+- دریافت روزانه مناسبت‌ها و تعطیلی‌های رسمی از «با حساب»
+- نمایش قرمز روزهای تعطیل و متن مناسبت آن‌ها
+- تغییر خودکار ارتفاع تقویم بر اساس تعداد و طول مناسبت‌ها
+- راهنمای اسکرول نرم منوی همبرگری، روزی یک‌بار
+- منوهای واکنش‌گرا برای «+» و سه‌نقطه کانفیگ‌ها بدون بیرون‌زدگی از صفحه
+- کارت‌های ابزار جمع‌وجور و بدون کادر کلی، با محوشدن کامل به سمت راست
+- بازخورد لرزشی ظریف برای کلید VPN، دکمه «+»، سه‌نقطه و گزینه‌های ابزار
+- اصلاح کامل رنگ، کنتراست، کارت‌ها، نقشه، ویجت‌ها و پنجره‌ها در تم روشن
 
 ### پینگ زنده مستقیم و اتصال خودکار
 

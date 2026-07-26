@@ -159,6 +159,7 @@ class MainRecyclerAdapter(
                 holder.itemMainBinding.layoutMore.visibility = View.VISIBLE
 
                 holder.itemMainBinding.layoutMore.setOnClickListener {
+                    it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                     adapterListener?.onShare(guid, profile, position, true, holder.itemMainBinding.layoutMore)
                 }
             } else {
@@ -168,6 +169,7 @@ class MainRecyclerAdapter(
                 holder.itemMainBinding.layoutMore.visibility = View.VISIBLE
 
                 holder.itemMainBinding.layoutMore.setOnClickListener {
+                    it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                     adapterListener?.onShare(guid, profile, position, false, holder.itemMainBinding.layoutMore)
                 }
             }

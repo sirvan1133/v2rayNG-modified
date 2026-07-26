@@ -51,6 +51,9 @@
     <color name="tg_shadow">#1A000000</color>
     <color name="tg_surfaceTint">#5EB5F7</color>
     <color name="tg_scrim">#AA000000</color>
+    <color name="drawer_calendar_accent">#FFD98A</color>
+    <color name="drawer_calendar_title">#E9F5F2</color>
+    <color name="drawer_calendar_muted">#9BC6C2</color>
 
     <!-- ── Map to Material 3 names ── -->
     <color name="md_theme_primary">@color/tg_primary</color>
