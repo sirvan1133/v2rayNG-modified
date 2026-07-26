@@ -21,6 +21,11 @@ import kotlinx.coroutines.sync.withPermit
  * the default network, an unbound socket would measure the tunnel instead.
  */
 object DirectPingManager {
+    data class Measurement(
+        val latencyMs: Long,
+        val destinationIp: String
+    )
+
     @Volatile
     private var connectivity: ConnectivityManager? = null
 
@@ -48,30 +53,41 @@ object DirectPingManager {
     }
 
     suspend fun measure(context: Context, host: String?, portText: String?): Long =
+        measureDetailed(context, host, portText)?.latencyMs ?: -1L
+
+    /**
+     * Measures TCP connect latency and returns the exact destination IP used by
+     * that same socket. This keeps latency and endpoint GeoIP tied together.
+     */
+    suspend fun measureDetailed(context: Context, host: String?, portText: String?): Measurement? =
         withContext(Dispatchers.IO) {
-            val cleanHost = host?.trim()?.takeIf { it.isNotEmpty() } ?: return@withContext -1L
-            val port = portText?.toIntOrNull()?.takeIf { it in 1..65535 } ?: return@withContext -1L
+            val cleanHost = host?.trim()?.takeIf { it.isNotEmpty() } ?: return@withContext null
+            val port = portText?.toIntOrNull()?.takeIf { it in 1..65535 } ?: return@withContext null
             ensureNetworkTracking(context.applicationContext)
 
             // VPN activation briefly reshuffles Android's Network objects. Wait
             // for the NOT_VPN callback instead of falling back to the tunnel.
-            val network = awaitPhysicalNetwork() ?: return@withContext -1L
+            val network = awaitPhysicalNetwork() ?: return@withContext null
             probes.withPermit {
                 try {
                     Socket().use { socket ->
                         socket.tcpNoDelay = true
                         network.bindSocket(socket)
                         val address = network.getAllByName(cleanHost).firstOrNull()
-                            ?: return@withPermit -1L
+                            ?: return@withPermit null
                         val started = SystemClock.elapsedRealtimeNanos()
                         socket.connect(InetSocketAddress(address, port), CONNECT_TIMEOUT_MS)
-                        ((SystemClock.elapsedRealtimeNanos() - started) / 1_000_000L).coerceAtLeast(1L)
+                        Measurement(
+                            latencyMs = ((SystemClock.elapsedRealtimeNanos() - started) / 1_000_000L)
+                                .coerceAtLeast(1L),
+                            destinationIp = address.hostAddress.orEmpty()
+                        )
                     }
                 } catch (_: Exception) {
                     // The Network object may have become stale while the screen
                     // was off. Drop it so the next probe resolves a fresh one.
                     if (physicalNetwork == network) physicalNetwork = null
-                    -1L
+                    null
                 }
             }
         }
@@ -83,8 +99,8 @@ object DirectPingManager {
     }
 
     /**
-     * Returns a validated Wi-Fi/mobile/Ethernet Network for small direct HTTP
-     * lookups such as source-IP geolocation. Call from a background thread.
+     * Returns a physical Wi-Fi/mobile Network for small direct HTTP lookups
+     * such as source-IP geolocation. Call from a background thread.
      */
     fun directNetwork(context: Context): Network? {
         ensureNetworkTracking(context.applicationContext)
@@ -144,10 +160,10 @@ object DirectPingManager {
         capabilities ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) &&
+            !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
             (
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
                 )
     }
 
@@ -156,7 +172,6 @@ object DirectPingManager {
         var score = 0
         if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) score += 100
         if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) score += 20
-        if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) score += 15
         if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) score += 10
         return score
     }

@@ -26,7 +26,7 @@ import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.helper.ItemTouchHelperAdapter
 import com.v2ray.ang.helper.ItemTouchHelperViewHolder
-import com.v2ray.ang.util.DirectPingManager
+import com.v2ray.ang.util.RealLatencyManager
 import com.v2ray.ang.viewmodel.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,6 +50,7 @@ class MainRecyclerAdapter(
         private const val VIEW_TYPE_FOOTER = 2
         private const val LIVE_PING_INTERVAL_MS = 5_000L
         private const val PING_CACHE_TTL_MS = 30_000L
+        private const val FLAG_PREFS = "destination_flag_cache"
         private val flagCache = ConcurrentHashMap<String, String>()
         private val pingCache = ConcurrentHashMap<String, PingSnapshot>()
 
@@ -107,7 +108,8 @@ class MainRecyclerAdapter(
             holder.itemMainBinding.tvName.text = removeFlags(profile.remarks)
             holder.itemMainBinding.tvStatistics.text = getAddress(profile)
             holder.itemMainBinding.tvType.text = profile.configType.name
-            holder.itemMainBinding.tvSubscription.text = "🌐"
+            holder.itemMainBinding.tvSubscription.text =
+                loadPersistedFlag(context, profile) ?: "🌐"
             holder.itemMainBinding.tvSubscription.visibility = View.VISIBLE
 
             val isSelected = guid == MmkvManager.getSelectServer()
@@ -166,7 +168,7 @@ class MainRecyclerAdapter(
                 visibility = View.GONE
             }
 
-            startLiveDirectPing(holder, profile)
+            startLiveDirectPing(holder, guid, profile)
 
             //layoutIndicator
             //subscription remarks — show first char of sub name in avatar
@@ -209,9 +211,10 @@ class MainRecyclerAdapter(
         super.onViewRecycled(holder)
     }
 
-    private fun startLiveDirectPing(holder: MainViewHolder, profile: ProfileItem) {
+    private fun startLiveDirectPing(holder: MainViewHolder, guid: String, profile: ProfileItem) {
         holder.livePingJob?.cancel()
         val binding = holder.itemMainBinding
+        binding.root.tag = guid
         val pingKey = "${profile.server.orEmpty()}:${profile.serverPort.orEmpty()}"
         val cachedPing = pingCache[pingKey]
             ?.takeIf { System.currentTimeMillis() - it.measuredAt <= PING_CACHE_TTL_MS }
@@ -230,27 +233,32 @@ class MainRecyclerAdapter(
             // backgrounded or the screen is locked. Cached values remain visible.
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 coroutineScope {
-                    launch {
-                        val host = profile.server.orEmpty()
-                        val flag = flagCache[host] ?: withContext(Dispatchers.IO) {
-                            flagForCountryCode(
-                                IpGeoLocationResolver.serverLocation(
-                                    binding.root.context.applicationContext,
-                                    host
-                                )?.countryCode
-                            )
-                        }.also { if (host.isNotBlank() && it != "🌐") flagCache[host] = it }
-                        if (isActive) binding.tvSubscription.text = flag
-                    }
                     while (isActive) {
-                        val ping = DirectPingManager.measure(
+                        val measurement = RealLatencyManager.measure(
                             binding.root.context.applicationContext,
-                            profile.server,
-                            profile.serverPort
+                            guid
                         )
-                        if (!isActive) return@coroutineScope
+                        if (!isActive || binding.root.tag != guid) return@coroutineScope
+                        val ping = measurement?.latencyMs ?: -1L
                         pingCache[pingKey] = PingSnapshot(ping, System.currentTimeMillis())
                         renderPing(binding, ping)
+                        measurement?.exitIp?.takeIf { it.isNotBlank() }?.let { exitIp ->
+                            val flag = flagCache[exitIp] ?: withContext(Dispatchers.IO) {
+                                flagForCountryCode(
+                                    IpGeoLocationResolver.destinationIpLocation(
+                                        binding.root.context.applicationContext,
+                                        exitIp
+                                    )?.countryCode
+                                )
+                            }
+                            if (flag != "🌐") {
+                                flagCache[exitIp] = flag
+                                savePersistedFlag(binding.root.context, profile, flag)
+                            }
+                            if (isActive && binding.root.tag == guid) {
+                                binding.tvSubscription.text = flag
+                            }
+                        }
                         delay(LIVE_PING_INTERVAL_MS)
                     }
                 }
@@ -287,6 +295,53 @@ class MainRecyclerAdapter(
             binding.statusDot.clearAnimation()
             binding.statusDot.alpha = .25f
         }
+    }
+
+    private fun flagPreferenceKey(profile: ProfileItem): String {
+        // Subscription refreshes may recreate GUIDs. Use only stable outbound
+        // properties so an unchanged destination keeps its persisted flag.
+        val destination = listOf(
+            profile.configType.name,
+            profile.server.orEmpty().trim().lowercase(),
+            profile.serverPort.orEmpty().trim()
+        ).joinToString("|")
+        return "flag_v3_${destination.hashCode().toUInt().toString(16)}"
+    }
+
+    private fun legacyFlagPreferenceKey(profile: ProfileItem): String {
+        val destination = listOf(
+            profile.configType.name,
+            profile.server.orEmpty().lowercase(),
+            profile.serverPort.orEmpty(),
+            profile.network.orEmpty(),
+            profile.security.orEmpty(),
+            profile.sni.orEmpty().lowercase(),
+            profile.host.orEmpty().lowercase(),
+            profile.path.orEmpty(),
+            profile.publicKey.orEmpty(),
+            profile.shortId.orEmpty()
+        ).joinToString("|")
+        return "flag_v2_${destination.hashCode().toUInt().toString(16)}"
+    }
+
+    private fun loadPersistedFlag(
+        context: android.content.Context,
+        profile: ProfileItem
+    ): String? {
+        val prefs = context.getSharedPreferences(FLAG_PREFS, android.content.Context.MODE_PRIVATE)
+        prefs.getString(flagPreferenceKey(profile), null)?.let { return it }
+        val legacy = prefs.getString(legacyFlagPreferenceKey(profile), null) ?: return null
+        prefs.edit().putString(flagPreferenceKey(profile), legacy).apply()
+        return legacy
+    }
+
+    private fun savePersistedFlag(
+        context: android.content.Context,
+        profile: ProfileItem,
+        flag: String
+    ) {
+        context.getSharedPreferences(FLAG_PREFS, android.content.Context.MODE_PRIVATE)
+            .edit().putString(flagPreferenceKey(profile), flag).commit()
     }
 
     private fun removeFlags(label: String): String {

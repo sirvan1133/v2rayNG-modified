@@ -62,6 +62,20 @@ object IpGeoLocationResolver {
         return lookupCached("server:${ip.lowercase()}", ip, client, SERVER_CACHE_TTL_MS)
     }
 
+    /** Looks up an already-resolved destination without performing DNS again. */
+    fun destinationIpLocation(context: Context, ip: String?): Result? {
+        val value = ip?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        loadStoredDestination(value)?.let { stored ->
+            if (System.currentTimeMillis() - stored.storedAt < SERVER_CACHE_TTL_MS) {
+                return stored.result
+            }
+        }
+        val network = DirectPingManager.directNetwork(context.applicationContext)
+        val client = network?.let(::directClient) ?: defaultClient()
+        return lookupCached("server:${value.lowercase()}", value, client, SERVER_CACHE_TTL_MS)
+            ?.also { saveStoredDestination(value, it) }
+    }
+
     private fun lookupCached(
         key: String,
         ip: String,
@@ -198,6 +212,34 @@ object IpGeoLocationResolver {
             .put("storedAt", System.currentTimeMillis())
         MmkvManager.encodeSettings(SOURCE_CACHE_KEY, json.toString())
     }
+
+    private fun loadStoredDestination(ip: String): StoredSource? = try {
+        val raw = MmkvManager.decodeSettingsString(destinationCacheKey(ip)).orEmpty()
+        if (raw.isBlank()) return null
+        val json = JSONObject(raw)
+        val result = resultFrom(
+            json.optDouble("latitude", Double.NaN),
+            json.optDouble("longitude", Double.NaN),
+            json.optString("country", "Unknown"),
+            json.optString("countryCode", "")
+        ) ?: return null
+        StoredSource(result, json.optLong("storedAt", 0L))
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun saveStoredDestination(ip: String, result: Result) {
+        val json = JSONObject()
+            .put("latitude", result.latitude)
+            .put("longitude", result.longitude)
+            .put("country", result.country)
+            .put("countryCode", result.countryCode)
+            .put("storedAt", System.currentTimeMillis())
+        MmkvManager.encodeSettings(destinationCacheKey(ip), json.toString())
+    }
+
+    private fun destinationCacheKey(ip: String) =
+        "destination_geoip_daily_${ip.lowercase().hashCode().toUInt().toString(16)}"
 
     private const val SOURCE_CACHE_KEY = "source_geoip_daily_cache"
     private const val SOURCE_REFRESH_MS = 24 * 60 * 60 * 1000L

@@ -84,6 +84,7 @@ class CinematicWorldMapView @JvmOverloads constructor(
     private val worldScale = 4096f
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
+        restoreLastMapState()
         // Preload and parse all Natural Earth vector geometry once. No bitmap
         // tiles or raster snapshots are created at any stage.
         loadCountries()
@@ -106,7 +107,56 @@ class CinematicWorldMapView @JvmOverloads constructor(
         // with the queued endpoint, not the old on-screen label, or Germany →
         // Finland starts the same flight repeatedly before it has arrived.
         if (target.point == destination && pendingEndpoint.country == country && hasEndpoint) return
+        saveMapState(target)
         beginTransition(target, active)
+    }
+
+    /**
+     * Keeps the last rendered location across Activity/process recreation. The
+     * bundled vector atlas is still rendered locally, but the camera no longer
+     * jumps to its default position and repeats the arrival animation on launch.
+     */
+    private fun restoreLastMapState() {
+        val prefs = context.getSharedPreferences(MAP_STATE_PREFS, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_HAS_LOCATION, false)) return
+        val lat = prefs.getString(KEY_LATITUDE, null)?.toDoubleOrNull() ?: return
+        val lon = prefs.getString(KEY_LONGITUDE, null)?.toDoubleOrNull() ?: return
+        if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return
+        val point = GeoPoint(lat, lon)
+        val restored = Endpoint(
+            point,
+            prefs.getString(KEY_COUNTRY, null).orEmpty().ifBlank { "Unknown" },
+            flagFor(prefs.getString(KEY_COUNTRY_CODE, null).orEmpty())
+        )
+        camera = point
+        source = point
+        destination = point
+        markerPosition = point
+        markerStart = point
+        endpoint = restored
+        pendingEndpoint = restored
+        hasEndpoint = true
+        labelReady = true
+        cameraZoom = prefs.getFloat(KEY_ZOOM, .82f)
+        startZoom = cameraZoom
+        targetZoom = cameraZoom
+    }
+
+    private fun saveMapState(target: Endpoint) {
+        context.getSharedPreferences(MAP_STATE_PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_HAS_LOCATION, true)
+            .putString(KEY_LATITUDE, target.point.lat.toString())
+            .putString(KEY_LONGITUDE, target.point.lon.toString())
+            .putString(KEY_COUNTRY, target.country)
+            .putString(KEY_COUNTRY_CODE, countryCodeForFlag(target.flag))
+            .putFloat(KEY_ZOOM, if (connected) 3.0f else .82f)
+            .apply()
+    }
+
+    private fun countryCodeForFlag(flag: String): String {
+        val points = flag.codePoints().toArray()
+        if (points.size != 2 || points.any { it !in 0x1F1E6..0x1F1FF }) return ""
+        return points.map { ('A'.code + it - 0x1F1E6).toChar() }.joinToString("")
     }
 
     /** Removes stale source/server coordinates while a fresh GeoIP lookup runs. */
@@ -393,6 +443,16 @@ class CinematicWorldMapView @JvmOverloads constructor(
 
     private fun drawEdgeFade(canvas: Canvas) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), edgeFadePaint)
+    }
+
+    private companion object {
+        const val MAP_STATE_PREFS = "cinematic_map_last_state"
+        const val KEY_HAS_LOCATION = "has_location"
+        const val KEY_LATITUDE = "latitude"
+        const val KEY_LONGITUDE = "longitude"
+        const val KEY_COUNTRY = "country"
+        const val KEY_COUNTRY_CODE = "country_code"
+        const val KEY_ZOOM = "zoom"
     }
 
     private fun loadCountries() {
