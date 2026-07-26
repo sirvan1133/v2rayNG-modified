@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.v2ray.ang.contracts.BaseAdapterListener
 import com.v2ray.ang.databinding.ItemRecyclerSubSettingBinding
+import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.helper.ItemTouchHelperAdapter
 import com.v2ray.ang.helper.ItemTouchHelperViewHolder
 import com.v2ray.ang.util.Utils
@@ -24,7 +25,8 @@ class SubSettingRecyclerAdapter(
         val subscriptions = viewModel.getAll()
         val subId = subscriptions[position].guid
         val subItem = subscriptions[position].subscription
-        holder.itemSubSettingBinding.tvName.text = subItem.remarks
+        val username = AngConfigManager.resolveSubscriptionUsername(subItem)
+        holder.itemSubSettingBinding.tvName.text = username.ifBlank { subItem.remarks }
         holder.itemSubSettingBinding.tvUrl.text = subItem.url
         holder.itemSubSettingBinding.chkEnable.isChecked = subItem.enabled
         holder.itemSubSettingBinding.tvLastUpdated.text = Utils.formatTimestamp(subItem.lastUpdated)
