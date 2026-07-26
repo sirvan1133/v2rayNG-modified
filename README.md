@@ -7,9 +7,18 @@ A redesigned and feature-enhanced Android client based on
 
 ## Screenshots
 
-| Light tools | Dark tools | Light calendar | Dark calendar |
-| :---: | :---: | :---: | :---: |
-| <img src="screenshots/tools-light.png" alt="Responsive tools in light mode" width="240"> | <img src="screenshots/tools-dark.png" alt="Responsive tools in dark mode" width="240"> | <img src="screenshots/calendar-light.png" alt="Persian calendar in light mode" width="240"> | <img src="screenshots/calendar-dark.png" alt="Persian calendar in dark mode" width="240"> |
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/main-dark.png" alt="Home screen in dark mode" width="260"><br><sub>Dark home</sub></td>
+    <td align="center"><img src="screenshots/drawer-dark.png" alt="Hamburger menu in dark mode" width="260"><br><sub>Dark hamburger menu</sub></td>
+    <td align="center"><img src="screenshots/market-dark.png" alt="Market prices in dark mode" width="260"><br><sub>Dark market prices</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/main-light.png" alt="Home screen in light mode" width="260"><br><sub>Light home</sub></td>
+    <td align="center"><img src="screenshots/drawer-light.png" alt="Hamburger menu in light mode" width="260"><br><sub>Light hamburger menu</sub></td>
+    <td align="center"><img src="screenshots/market-light.png" alt="Market prices in light mode" width="260"><br><sub>Light market prices</sub></td>
+  </tr>
+</table>
 
 ## Added features compared with standard v2rayNG
 
